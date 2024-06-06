@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from .models import CustomUser
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework.exceptions import ValidationError
 
@@ -34,5 +33,5 @@ class CustomUserLoginSerializer(serializers.Serializer):
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model= UserModel
-        fields = ('email', 'username')
+        exclude = ['password', 'is_superuser', 'is_staff', 'is_active', 'date_joined', 'last_login', 'groups', 'user_permissions']
 
