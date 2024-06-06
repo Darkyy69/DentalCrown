@@ -20,6 +20,37 @@ from .validation import custom_validation
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [SessionAuthentication]
+
+    def update(self, request, *args, **kwargs):
+        user = request.user
+        if user.role not in ['admin', 'receptionist']:
+            return Response({'error': 'You do not have permission to update this user.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
+        # Check if 'role' is being updated
+        if 'role' in request.data:
+            new_role = request.data['role']
+            if new_role not in ['dentist', 'receptionist']:
+                return Response({'error': 'Role can only be changed to either "dentist" or "receptionist".'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        user = request.user
+        if user.role not in ['admin', 'receptionist']:
+            return Response({'error': 'You do not have permission to delete this user.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
