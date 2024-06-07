@@ -5,6 +5,7 @@ import useAuth from "../../hooks/useAuth";
 const Profile = () => {
   const { auth } = useAuth();
   const user = auth.user;
+  console.log(user);
   return (
     <div className="flex flex-col items-center justify-center h-[80vh]">
       <h1 className="text-4xl font-bold mb-8">Welcome {user.username}!</h1>
@@ -14,6 +15,12 @@ const Profile = () => {
             <h2 className="text-2xl font-bold mb-4">User Information</h2>
             <p>
               <span className="font-bold">Username:</span> {user.username}
+            </p>
+            <p>
+              <span className="font-bold">First Name:</span> {user.first_name}
+            </p>
+            <p>
+              <span className="font-bold">Last Name:</span> {user.last_name}
             </p>
             <p>
               <span className="font-bold">Email:</span> {user.email}

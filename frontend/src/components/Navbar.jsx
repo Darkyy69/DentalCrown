@@ -12,7 +12,7 @@ const Navbar = () => {
     baseURL: "http://127.0.0.1:8000",
   });
   const { auth, setAuth } = useAuth();
-  
+
   const user = auth?.user;
 
   function logout(e) {
@@ -483,7 +483,7 @@ const Navbar = () => {
                   </div>
                 </a>
                 <a
-                  href="#"
+                  href="/profile"
                   className="block p-4 text-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 group"
                 >
                   <svg
@@ -633,7 +633,7 @@ const Navbar = () => {
               >
                 <li>
                   <a
-                    href="#"
+                    href="/profile"
                     className="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-400 dark:hover:text-white"
                   >
                     My profile
