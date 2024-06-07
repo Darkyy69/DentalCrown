@@ -1,6 +1,6 @@
 from rest_framework import viewsets
-from .models import Patient, Appointment, MedicalRecord, Payment
-from .serializers import PatientSerializer, AppointmentSerializer, MedicalRecordSerializer, PaymentSerializer
+from .models import Patient, Appointment, Payment
+from .serializers import PatientSerializer, AppointmentSerializer, PaymentSerializer
 
 class PatientViewSet(viewsets.ModelViewSet):
     queryset = Patient.objects.all()
@@ -9,10 +9,6 @@ class PatientViewSet(viewsets.ModelViewSet):
 class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
-
-class MedicalRecordViewSet(viewsets.ModelViewSet):
-    queryset = MedicalRecord.objects.all()
-    serializer_class = MedicalRecordSerializer
 
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
