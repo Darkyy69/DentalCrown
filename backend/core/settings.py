@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'api',
     'user',
     'clinic',
+    'django_extensions'
 ]
 
 AUTH_USER_MODEL = 'user.CustomUser'

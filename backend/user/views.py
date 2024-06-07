@@ -2,20 +2,16 @@ from rest_framework import viewsets
 from .models import CustomUser
 from .serializers import CustomUserRegistrationSerializer, CustomUserLoginSerializer, CustomUserSerializer
 
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 # from django.contrib.auth.models import User
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from django.shortcuts import render
-from django.middleware.csrf import get_token
-from rest_framework.decorators import api_view
+
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework import generics, permissions
+from rest_framework import permissions
 from rest_framework.authentication import SessionAuthentication
-from .validation import custom_validation, validate_email, validate_password, validate_username
-import json
+from .validation import custom_validation
+
 # from rest_framework import generics
 # from rest_framework.permissions import IsAdminUser
 
@@ -24,6 +20,37 @@ import json
 class CustomUserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [SessionAuthentication]
+
+    def update(self, request, *args, **kwargs):
+        user = request.user
+        if user.role not in ['admin', 'receptionist']:
+            return Response({'error': 'You do not have permission to update this user.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
+        # Check if 'role' is being updated
+        if 'role' in request.data:
+            new_role = request.data['role']
+            if new_role not in ['dentist', 'receptionist']:
+                return Response({'error': 'Role can only be changed to either "dentist" or "receptionist".'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        user = request.user
+        if user.role not in ['admin', 'receptionist']:
+            return Response({'error': 'You do not have permission to delete this user.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -80,15 +107,28 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 # 		return Response({'user': serializer.data}, status=status.HTTP_200_OK)
 
 class CustomUserRegister(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request):
+        # Check if the user making the request has the 'admin' or 'receptionist' role
+        if request.user.role not in ['admin', 'receptionist']:
+            return Response({'error': 'You do not have permission to create a new user.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Validate and clean the data
         clean_data = custom_validation(request.data)
+        
+        # Serialize the data
         serializer = CustomUserRegistrationSerializer(data=clean_data)
+        
+        # Check if the serialized data is valid
         if serializer.is_valid(raise_exception=True):
+            # Create the user
             user = serializer.create(clean_data)
             if user:
-                return Response(serializer.data, status = status.HTTP_201_CREATED)
+                # Return the serialized data and a success status
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
         
+        # Return a bad request status if the data is not valid
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class CustomUserLogin(APIView):
@@ -97,8 +137,8 @@ class CustomUserLogin(APIView):
 
     def post(self, request):
         data = request.data
-        assert validate_username(data)
-        assert validate_password(data)
+        # assert validate_username(data)
+        # assert validate_password(data)
         serializer = CustomUserLoginSerializer(data=data)
         if serializer.is_valid(raise_exception=True):
             user = serializer.check_user(data)
@@ -117,6 +157,9 @@ class CustomUserView(APIView):
     authentication_classes = [SessionAuthentication]
 
     def get(self, request):
-        serializer  = CustomUserSerializer(request.user)
-        return Response({'user': serializer.data}, status=status.HTTP_200_OK)
+        if request.user:
+            serializer  = CustomUserSerializer(request.user)
+            return Response({'user': serializer.data}, status=status.HTTP_200_OK)
+        
+        return Response({'error': 'You are not authenticated yet'}, status=status.HTTP_403_FORBIDDEN)
 
