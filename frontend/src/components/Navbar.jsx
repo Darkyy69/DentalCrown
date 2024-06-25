@@ -23,6 +23,7 @@ import {
   Search,
   Settings,
   ShoppingCart,
+  Calendar,
   Truck,
   Users2,
 } from "lucide-react";
@@ -103,7 +104,9 @@ const Navbar = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                  href="#"
+                  // href="/"
+                  // to={{ pathname: "/" }}
+                  to="/"
                   className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                 >
                   <Home className="h-5 w-5" />
@@ -117,14 +120,30 @@ const Navbar = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
-                  href="#"
+                  // href="/calendar"
+                  to="/calendar"
                   className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
                 >
-                  <ShoppingCart className="h-5 w-5" />
-                  <span className="sr-only">Orders</span>
+                  <Calendar className="h-5 w-5" />
+                  <span className="sr-only">Calendar</span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">Orders</TooltipContent>
+              <TooltipContent side="right">Calendar</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  to="/my-calendar"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
+                >
+                  <Calendar className="h-5 w-5" />
+                  <span className="sr-only">My Calendar</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">My Calendar</TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
@@ -220,7 +239,7 @@ const Navbar = () => {
                   className="flex items-center gap-4 px-2.5 text-foreground"
                 >
                   <ShoppingCart className="h-5 w-5" />
-                  Orders
+                  Calendar
                 </Link>
                 <Link
                   href="#"

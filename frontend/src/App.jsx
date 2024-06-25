@@ -10,6 +10,8 @@ import Login from "./pages/Auth/Login.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Clinic from "./pages/Clinic/Clinic.jsx";
 import Unauthorized from "./pages/Auth/Unauthorized.jsx";
+import Calendar from "./pages/Calendar/Calendar.jsx";
+import MyCalendar from "./pages/MyCalendar/MyCalendar.jsx";
 import Rdv from "./pages/Rdv/Rdv.jsx";
 // import useAuth from "./hooks/useAuth";
 import ProtectedLayout from "./utils/ProtectedLayout.jsx";
@@ -41,6 +43,8 @@ function App() {
               {/* Below this line will be the navbar Only after Logging In (TO-DO) */}
               <Route element={<ProtectedLayout />}>
                 <Route element={<Dashboard />} path="/" exact />
+                <Route element={<Calendar />} path="/calendar" />
+                <Route element={<MyCalendar />} path="/my-calendar" />
                 <Route element={<Profile />} path="/profile" />
               </Route>
 
