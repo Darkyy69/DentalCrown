@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Tooltip,
@@ -41,39 +41,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Menubar,
-  MenubarContent,
-  MenubarItem,
-  MenubarMenu,
-  MenubarSeparator,
-  MenubarShortcut,
-  MenubarTrigger,
-} from "@/components/ui/menubar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+
 import { ModeToggle } from "./ModeToggle";
+import AddNewPatient from "./AddNewPatient";
 import useAuth from "../hooks/useAuth";
 import { toast } from "react-hot-toast";
-import axios from "axios";
-
-axios.defaults.xsrfCookieName = "csrftoken";
-axios.defaults.xsrfHeaderName = "X-CSRFToken";
-axios.defaults.withCredentials = true;
+import client from "./axiosClient";
+import { SearchBar } from "./SearchBar";
 
 const Navbar = () => {
-  const client = axios.create({
-    baseURL: "http://127.0.0.1:8000",
-  });
   const { auth, setAuth } = useAuth();
-
   const user = auth?.user;
 
   function handleLogout(e) {
@@ -101,7 +80,7 @@ const Navbar = () => {
             <span className="sr-only">Acme Inc</span>
           </Link>
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
                   // href="/"
@@ -117,7 +96,7 @@ const Navbar = () => {
             </Tooltip>
           </TooltipProvider>
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
                   // href="/calendar"
@@ -133,7 +112,7 @@ const Navbar = () => {
           </TooltipProvider>
 
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
                   to="/my-calendar"
@@ -148,7 +127,7 @@ const Navbar = () => {
           </TooltipProvider>
 
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
                   href="#"
@@ -163,7 +142,7 @@ const Navbar = () => {
           </TooltipProvider>
 
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
                   href="#"
@@ -178,7 +157,7 @@ const Navbar = () => {
           </TooltipProvider>
 
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
                   href="#"
@@ -194,7 +173,7 @@ const Navbar = () => {
         </nav>
         <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <Link
                   href="#"
@@ -265,15 +244,13 @@ const Navbar = () => {
               </nav>
             </SheetContent>
           </Sheet>
-          <div className="relative ml-auto flex-1 md:grow-0">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Family name, Last name or Phone"
-              className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
-            />
+          <div className="flex ml-auto grow md:grow-0 gap-2">
+            {/* <ModeToggle /> */}
+            <AddNewPatient />
+            <div className="relative w-full">
+              <SearchBar />
+            </div>
           </div>
-          <ModeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -293,7 +270,18 @@ const Navbar = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <div className="flex items-center space-x-2">
+                  {/* <Label className="font-normal" htmlFor="airplane-mode" checked={darkTheme} onCheckChange={handleThemeChange}>Theme Switch</Label> */}
+                  <Label className="font-normal" htmlFor="airplane-mode">
+                    Theme
+                  </Label>
+                  <ModeToggle />
+                  {/* <Switch id="airplane-mode" /> */}
+                </div>
+              </DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
+
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>

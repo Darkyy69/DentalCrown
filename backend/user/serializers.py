@@ -30,8 +30,18 @@ class CustomUserLoginSerializer(serializers.Serializer):
             raise ValidationError('User not found')
         return user
 
+
 class CustomUserSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
     class Meta:
-        model= UserModel
+        model = UserModel
         exclude = ['password', 'is_superuser', 'is_staff', 'is_active', 'date_joined', 'last_login', 'groups', 'user_permissions']
 
+    def get_full_name(self, obj):
+        # Split last name to capitalize only the first part
+        first_name_parts = obj.first_name.split()
+        capitalized_first_name = ' '.join([part.capitalize() for part in first_name_parts])
+
+        # Format full name
+        return f"Dr. {obj.last_name.upper()} {capitalized_first_name}"

@@ -10,12 +10,14 @@ import Login from "./pages/Auth/Login.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Clinic from "./pages/Clinic/Clinic.jsx";
 import Unauthorized from "./pages/Auth/Unauthorized.jsx";
-import Calendar from "./pages/Calendar/Calendar.jsx";
+import CalendarTest, { Schedule } from "./pages/Calendar/Calendar.jsx";
 import MyCalendar from "./pages/MyCalendar/MyCalendar.jsx";
 import Rdv from "./pages/Rdv/Rdv.jsx";
 // import useAuth from "./hooks/useAuth";
 import ProtectedLayout from "./utils/ProtectedLayout.jsx";
 import { ThemeProvider } from "./context/ThemeProvider.jsx";
+import Calendar_Testing from "./pages/Calendar/Calendar_Testing.jsx";
+import MyCalendar_Testing from "./pages/Calendar/MyCalendar_Testing.jsx";
 
 function App() {
   return (
@@ -43,7 +45,15 @@ function App() {
               {/* Below this line will be the navbar Only after Logging In (TO-DO) */}
               <Route element={<ProtectedLayout />}>
                 <Route element={<Dashboard />} path="/" exact />
-                <Route element={<Calendar />} path="/calendar" />
+                <Route element={<Schedule />} path="/calendar" />
+                <Route
+                  element={<Calendar_Testing />}
+                  path="/calendar_testing"
+                />
+                <Route
+                  element={<MyCalendar_Testing />}
+                  path="/mycalendar_testing"
+                />
                 <Route element={<MyCalendar />} path="/my-calendar" />
                 <Route element={<Profile />} path="/profile" />
               </Route>
