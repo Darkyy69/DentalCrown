@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from user.serializers import CustomUserSerializer
+from user.models import CustomUser
 from .models import Establishment, Patient, Speciality, DentalService, SubCategoryService, Appointment, Treatment, Payment, Consumable, Diagnostic
 
 class EstablishmentSerializer(serializers.ModelSerializer):
@@ -31,7 +32,8 @@ class ConsumableSerializer(serializers.ModelSerializer):
         model = Consumable
         fields = '__all__'
 class PatientSerializer(serializers.ModelSerializer):
-    dentist = CustomUserSerializer()
+    # dentist = CustomUserSerializer()
+    dentist = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
     full_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -52,6 +54,11 @@ class PatientSerializer(serializers.ModelSerializer):
         full_name = f"{title}{obj.last_name.upper()} {obj.first_name.capitalize()}"
         
         return full_name
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['dentist'] = CustomUserSerializer(instance.dentist).data
+        return representation
     
 
 class TreatmentSerializer(serializers.ModelSerializer):
@@ -77,7 +84,17 @@ class AppointmentSerializer(serializers.ModelSerializer):
         return obj.get_status_display()
 
 class PaymentSerializer(serializers.ModelSerializer):
+    patient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all())
+    dentist = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+    treatment = serializers.PrimaryKeyRelatedField(queryset=Treatment.objects.all())
+
     class Meta:
         model = Payment
-        fields = '__all__'
+        fields = ['id', 'patient', 'dentist', 'treatment', 'current_user', 'date', 'amount']
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['dentist'] = CustomUserSerializer(instance.dentist).data
+        representation['patient'] = PatientSerializer(instance.patient).data
+        representation['treatment'] = TreatmentSerializer(instance.treatment).data
+        return representation

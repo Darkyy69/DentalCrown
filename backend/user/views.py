@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from .models import CustomUser
-from .serializers import CustomUserRegistrationSerializer, CustomUserLoginSerializer, CustomUserSerializer
+# from .serializers import CustomUserRegistrationSerializer, CustomUserLoginSerializer, CustomUserSerializer
 
 from django.contrib.auth import login, logout
 # from django.contrib.auth.models import User
@@ -10,18 +10,28 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import permissions
 from rest_framework.authentication import SessionAuthentication
-from .validation import custom_validation
+from rest_framework import generics
+from .serializers import CustomUserSerializer
+from rest_framework.permissions import IsAuthenticated, AllowAny
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 
 # from rest_framework import generics
 # from rest_framework.permissions import IsAdminUser
 
+class CreateUserView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticated]
+
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
-    queryset = CustomUser.objects.all()
+    queryset = User.objects.all()
     serializer_class = CustomUserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def update(self, request, *args, **kwargs):
         user = request.user
@@ -51,6 +61,18 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# class CustomUserView(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
+#     authentication_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         if request.user:
+#             serializer  = CustomUserSerializer(request.user)
+#             return Response({'user': serializer.data}, status=status.HTTP_200_OK)
+        
+#         return Response({'error': 'You are not authenticated yet'}, status=status.HTTP_403_FORBIDDEN)
 
 
 
@@ -106,60 +128,49 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 # 		serializer = CustomUserSerializer(request.user)
 # 		return Response({'user': serializer.data}, status=status.HTTP_200_OK)
 
-class CustomUserRegister(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+# class CustomUserRegister(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request):
-        # Check if the user making the request has the 'admin' or 'receptionist' role
-        if request.user.role not in ['admin', 'receptionist']:
-            return Response({'error': 'You do not have permission to create a new user.'}, status=status.HTTP_403_FORBIDDEN)
+#     def post(self, request):
+#         # Check if the user making the request has the 'admin' or 'receptionist' role
+#         if request.user.role not in ['admin', 'receptionist']:
+#             return Response({'error': 'You do not have permission to create a new user.'}, status=status.HTTP_403_FORBIDDEN)
         
-        # Validate and clean the data
-        clean_data = custom_validation(request.data)
+#         # Validate and clean the data
+#         clean_data = custom_validation(request.data)
         
-        # Serialize the data
-        serializer = CustomUserRegistrationSerializer(data=clean_data)
+#         # Serialize the data
+#         serializer = CustomUserRegistrationSerializer(data=clean_data)
         
-        # Check if the serialized data is valid
-        if serializer.is_valid(raise_exception=True):
-            # Create the user
-            user = serializer.create(clean_data)
-            if user:
-                # Return the serialized data and a success status
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         # Check if the serialized data is valid
+#         if serializer.is_valid(raise_exception=True):
+#             # Create the user
+#             user = serializer.create(clean_data)
+#             if user:
+#                 # Return the serialized data and a success status
+#                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         
-        # Return a bad request status if the data is not valid
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+#         # Return a bad request status if the data is not valid
+#         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-class CustomUserLogin(APIView):
-    permission_classes = [permissions.AllowAny]
-    authentication_classes = [SessionAuthentication]
+# class CustomUserLogin(APIView):
+#     permission_classes = [permissions.AllowAny]
+#     authentication_classes = [SessionAuthentication]
 
-    def post(self, request):
-        data = request.data
-        # assert validate_username(data)
-        # assert validate_password(data)
-        serializer = CustomUserLoginSerializer(data=data)
-        if serializer.is_valid(raise_exception=True):
-            user = serializer.check_user(data)
-            login(request, user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+#     def post(self, request):
+#         data = request.data
+#         # assert validate_username(data)
+#         # assert validate_password(data)
+#         serializer = CustomUserLoginSerializer(data=data)
+#         if serializer.is_valid(raise_exception=True):
+#             user = serializer.check_user(data)
+#             login(request, user)
+#             return Response(serializer.data, status=status.HTTP_200_OK)
         
-class CustomUserLogout(APIView):
-	permission_classes = (permissions.AllowAny,)
-	authentication_classes = ()
-	def post(self, request):
-		logout(request)
-		return Response(status=status.HTTP_200_OK)
+# class CustomUserLogout(APIView):
+# 	permission_classes = (permissions.AllowAny,)
+# 	authentication_classes = ()
+# 	def post(self, request):
+# 		logout(request)
+# 		return Response(status=status.HTTP_200_OK)
     
-class CustomUserView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [SessionAuthentication]
-
-    def get(self, request):
-        if request.user:
-            serializer  = CustomUserSerializer(request.user)
-            return Response({'user': serializer.data}, status=status.HTTP_200_OK)
-        
-        return Response({'error': 'You are not authenticated yet'}, status=status.HTTP_403_FORBIDDEN)
-

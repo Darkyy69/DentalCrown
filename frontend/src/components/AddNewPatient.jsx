@@ -32,10 +32,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-import { UserPlusIcon } from "lucide-react";
+import { UserPlus2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
-import client from "./axiosClient";
+import api from "../api";
 
 export default function AddNewPatient() {
   const [open, setOpen] = React.useState(false);
@@ -46,7 +46,7 @@ export default function AddNewPatient() {
 
   const fetchDentists = async () => {
     try {
-      const response = await client.get("/api/users/");
+      const response = await api.get("/api/users/");
       // filter response data to only include dentists (role == dentist) and set it to dentists state
       setDentists(
         response.data.filter(
@@ -58,16 +58,16 @@ export default function AddNewPatient() {
     }
   };
   React.useEffect(() => {
-    // fetch all the dentists from the backend using client.get in a try catch block
+    // fetch all the dentists from the backend using api.get in a try catch block
     fetchDentists();
   }, []);
 
   React.useEffect(() => {
-    client
+    api
       .get("/csrf/")
       .then((response) => {
         const csrfToken = response.data.csrfToken;
-        client.defaults.headers.post["X-CSRFToken"] = csrfToken;
+        api.defaults.headers.post["X-CSRFToken"] = csrfToken;
       })
       .catch((error) => {
         console.error("Error fetching CSRF token:", error);
@@ -78,8 +78,12 @@ export default function AddNewPatient() {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="icon">
-            <UserPlusIcon className="h-4 w-4 text-muted-foreground" />
+          <Button
+            className="w-10 h-10 rounded-full"
+            variant="ghost"
+            size="icon"
+          >
+            <UserPlus2 size={24} className="text-muted-foreground" />
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[525px]">
@@ -98,8 +102,8 @@ export default function AddNewPatient() {
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
-        <Button variant="outline" size="icon">
-          <UserPlusIcon className="h-4 w-4 text-muted-foreground" />
+        <Button className="w-10 h-10 rounded-full" variant="ghost" size="icon">
+          <UserPlus2 size={24} className="text-muted-foreground" />
         </Button>
       </DrawerTrigger>
       <DrawerContent>
@@ -139,7 +143,7 @@ function ProfileForm({ className, dentists }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await client.post("/api/patients/", formData);
+      const response = await api.post("/api/patients/", formData);
       console.log("Patient added successfully:", response.data);
       // Optionally, you can handle success state or reset the form here
     } catch (error) {

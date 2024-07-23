@@ -19,6 +19,9 @@ from django.urls import path, include
 
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from user.views import CreateUserView
+from api.views import MyTokenObtainPairView
 
 def csrf(request):
     return JsonResponse({'csrfToken': get_token(request)})
@@ -26,7 +29,13 @@ def csrf(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("api/user/register/", CreateUserView.as_view(), name="register"),
+    path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api-auth/', include('rest_framework.urls')),
+    path('api/', include('notification.api.urls')),
     path('api/', include('api.urls')),
-    path('auth/', include('user.urls')),
+    # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # path('auth/', include('user.urls')),
     path('csrf/', csrf),
 ]

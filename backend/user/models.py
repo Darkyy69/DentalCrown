@@ -25,10 +25,31 @@ class CustomUser(AbstractUser):
         ('receptionist', 'Receptionist'),
         ('dentist', 'Dentist'),
     )
+    gender = models.CharField(max_length=1, choices
+    =(
+        ('M', 'Male'),
+        ('F', 'Female'),
+    ))
+
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
+
+
+    @property
+    def full_name(self):
+        # Define titles based on gender
+        titles = {
+            'M': 'Mr. ',
+            'F': 'Mrs. ',
+        }
+        # Get title based on gender or default to empty string
+        title = titles.get(self.gender, '')
+        # Format full name
+        full_name = f"{title}{self.last_name.upper()} {self.first_name.capitalize()}"
+        
+        return full_name
 
 
 

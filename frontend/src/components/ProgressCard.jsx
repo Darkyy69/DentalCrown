@@ -7,7 +7,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import PropTypes from "prop-types";
 
 export default function ProgressCard({
   description,
@@ -32,23 +31,3 @@ export default function ProgressCard({
     </Card>
   );
 }
-
-// Define default props in case some are not provided
-ProgressCard.defaultProps = {
-  description: "Default Description",
-  title: "Default Title",
-  titleClass: "text-4xl",
-  content: "Default Content",
-  progressValue: 0,
-  progressLabel: "Progress",
-};
-
-// Define prop types to ensure correct prop usage
-ProgressCard.propTypes = {
-  description: PropTypes.string,
-  title: PropTypes.string,
-  titleClass: PropTypes.string,
-  content: PropTypes.string,
-  progressValue: PropTypes.number,
-  progressLabel: PropTypes.string,
-};

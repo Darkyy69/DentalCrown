@@ -14,16 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ModeToggle } from "/src/components/ModeToggle";
 import DisabledGuy from "../../assets/DisabledGuy.svg";
-import { toast } from "react-hot-toast";
+// import { toast } from "react-hot-toast";
+import { useToast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
+import { jwtDecode } from "jwt-decode";
+import { ACCESS_TOKEN, REFRESH_TOKEN } from "/src/constants";
+
 import Loading from "../../components/Loading";
-
-axios.defaults.xsrfCookieName = "csrftoken";
-axios.defaults.xsrfHeaderName = "X-CSRFToken";
-axios.defaults.withCredentials = true;
-
-const client = axios.create({
-  baseURL: "http://127.0.0.1:8000",
-});
+import api from "/src/api";
 
 // function Login() {
 //   const [currentUser, setCurrentUser] = useState();
@@ -63,71 +61,65 @@ const client = axios.create({
 //   }
 
 export default function Login() {
+  const { toast } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { auth, setAuth } = useAuth();
+  const { setAuth } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
 
   // useEffect(() => {
-  //   client
+  //   setIsLoading(true);
+  //   api
   //     .get("/auth/user/")
   //     .then(function (res) {
   //       const user = res.data.user;
   //       setAuth({ user });
   //       navigate(from, { replace: true });
-  //       setIsLoading(false);
   //     })
   //     .catch(function (error) {
   //       setAuth({ user: null });
   //       console.error(error.response.data);
+  //     })
+  //     .finally(() => {
   //       setIsLoading(false);
-  //       // return <Navigate to="/" state={{ prevUrl: location.pathname }} />;
   //     });
-  // }, []);
+  // }, [setAuth, from, navigate]);
 
-  useEffect(() => {
-    setIsLoading(true);
-    client
-      .get("/auth/user/")
-      .then(function (res) {
-        const user = res.data.user;
-        setAuth({ user });
-        navigate(from, { replace: true });
-      })
-      .catch(function (error) {
-        setAuth({ user: null });
-        console.error(error.response.data);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [setAuth, from, navigate]);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    client
-      .post("/auth/login/", {
-        username: username,
-        password: password,
-      })
-      .then(function (res) {
-        const user = res.data.user;
-        setAuth({ user });
-        toast.success("Login successful!");
-        navigate(from, { replace: true });
-      })
-      .catch(function (error) {
-        toast.error(error.response.data || "Login failed.");
-      });
-  };
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    setIsLoading(true);
 
-  if (isLoading) {
-    <Loading />;
-  }
+    try {
+      const res = await api.post("/api/token/", { username, password });
+      localStorage.setItem(ACCESS_TOKEN, res.data.access);
+      localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+      const user = jwtDecode(res.data.access);
+      setAuth({ user });
+      toast({
+        variant: "success",
+        title: "Login successful!",
+        description: "You are now logged in.",
+      });
+      navigate(from, { replace: true });
+    } catch (error) {
+      // toast.error(error.response.data.detail || "Login failed.");
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: error.response.data.detail || "Login failed.",
+        // action: <ToastAction altText="Try again">Try again</ToastAction>,
+      });
+      setAuth({ user: null });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-dvh justify-center">
@@ -164,6 +156,9 @@ export default function Login() {
                 placeholder="Enter your password"
                 required
               />
+            </div>
+            <div className="flex justify-center">
+              {isLoading && <Loading />}
             </div>
             <Button type="submit" className="w-full">
               Login

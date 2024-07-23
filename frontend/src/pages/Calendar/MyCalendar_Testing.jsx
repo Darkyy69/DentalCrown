@@ -397,7 +397,7 @@ const MyCalendar_Testing = () => {
   // Example event data with `day` as `Date`
   const events = [
     {
-      day: parseISO("2024-07-01"), // Monday
+      day: parseISO("2024-07-09"), // Monday
       startTime: 6,
       endTime: 9,
       formatedStartTime: "6:00",
@@ -412,7 +412,7 @@ const MyCalendar_Testing = () => {
       borderColor: "border-green-600",
     },
     {
-      day: parseISO("2024-07-01"), // Monday
+      day: parseISO("2024-07-08"), // Monday
       startTime: 10,
       endTime: 12,
       title: "Umbrella Academy",
@@ -425,7 +425,7 @@ const MyCalendar_Testing = () => {
       borderColor: "border-green-600",
     },
     {
-      day: parseISO("2024-07-02"), // Tuesday
+      day: parseISO("2024-07-10"), // Tuesday
       startTime: 7,
       endTime: 7.5,
       formatedStartTime: "7:00",
