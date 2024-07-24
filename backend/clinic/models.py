@@ -69,11 +69,22 @@ class Diagnostic(models.Model):
 
     def __str__(self):
         return self.name    
+
+class Tooth(models.Model):
+    code = models.CharField(max_length=2)
+
+    class Meta:
+        verbose_name_plural = 'Teeth'
+        
+    def __str__(self):
+        return self.code
+    
+    
     
 class Treatment(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.DO_NOTHING)
     dentist = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, limit_choices_to={'role': 'dentist'})
-    teeth = models.IntegerField()
+    teeth = models.ManyToManyField(Tooth)
     start_date = models.DateField(editable=False, default=date.today)
     end_date = models.DateField(blank=True, null=True)
     # diagnostic would be choisable from a list of possible diagnostics
