@@ -6,6 +6,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider.jsx";
+import { PatientProvider } from "./context/PatientProvider.jsx";
 import PrivateRoutes from "./utils/PrivateRoutes.jsx";
 // import Home from "./pages/Home/Home.jsx";
 import Dashboard from "./pages/Dashboard/Dashboard.jsx";
@@ -72,7 +73,14 @@ function App() {
               <Route element={<ProtectedLayout />}>
                 <Route path="/" exact element={<Dashboard />} />
                 <Route path="/calendar" element={<Schedule />} />
-                <Route path="/patient/:patientId" element={<Patient />} />
+                <Route
+                  path="/patient/:patientId"
+                  element={
+                    <PatientProvider>
+                      <Patient />
+                    </PatientProvider>
+                  }
+                />
                 <Route
                   path="/calendar_testing"
                   element={<Calendar_Testing />}
