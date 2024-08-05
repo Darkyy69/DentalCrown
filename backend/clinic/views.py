@@ -179,6 +179,12 @@ class TreatmentViewSet(viewsets.ModelViewSet):
     queryset = Treatment.objects.all()
     serializer_class = TreatmentSerializer
 
+    @action(detail=False, methods=['get'], url_path='patient/(?P<patient_id>[^/.]+)')
+    def patient_treatments(self, request, patient_id=None):
+        treatments = Treatment.objects.filter(patient_id=patient_id)
+        serializer = self.get_serializer(treatments, many=True)
+        return Response(serializer.data)
+    
 class ConsumableViewSet(viewsets.ModelViewSet):
     queryset = Consumable.objects.all()
     serializer_class = ConsumableSerializer

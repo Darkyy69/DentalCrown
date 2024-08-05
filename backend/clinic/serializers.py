@@ -35,10 +35,12 @@ class PatientSerializer(serializers.ModelSerializer):
     # dentist = CustomUserSerializer()
     dentist = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
     full_name = serializers.SerializerMethodField()
+    age = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Patient
-        fields = ['id', 'first_name', 'last_name', 'date_of_birth', 'phone_number', 'email', 'address', 'gender', 'dentist', 'full_name']
+        fields = ['id', 'first_name', 'last_name', 'date_of_birth', 'phone_number', 'email', 'address', 'gender', 'dentist', 'full_name', 'age']
 
     def get_full_name(self, obj):
         # Define titles based on gender
@@ -54,6 +56,12 @@ class PatientSerializer(serializers.ModelSerializer):
         full_name = f"{title}{obj.last_name.upper()} {obj.first_name.capitalize()}"
         
         return full_name
+    
+    def get_age(self, obj):
+        import datetime
+        today = datetime.date.today()
+        age = today.year - obj.date_of_birth.year - ((today.month, today.day) < (obj.date_of_birth.month, obj.date_of_birth.day))
+        return age
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)

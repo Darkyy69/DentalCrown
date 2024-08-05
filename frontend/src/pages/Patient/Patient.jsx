@@ -6,11 +6,15 @@ import FollowUp from "./FollowUp";
 import Finance from "./Finance";
 import Appointments from "./Appointments";
 import PatientContext, { PatientProvider } from "../../context/PatientProvider";
-import { useParams } from "react-router-dom";
 
 export default function Patient() {
   const [activeTab, setActiveTab] = useState("patient-record");
   const { patientInfo } = useContext(PatientContext);
+
+  const handleSave = () => {
+    // Implement the save logic here
+    console.log("Save button clicked ");
+  };
 
   return (
     <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
@@ -19,7 +23,7 @@ export default function Patient() {
           <div>
             <h1 className="md:text-xl font-bold">
               {patientInfo
-                ? `${patientInfo.full_name}, ${patientInfo.date_of_birth} years old`
+                ? `${patientInfo.full_name}, ${patientInfo.age} years old`
                 : "Loading..."}
             </h1>
             <p className="text-sm lg:text-base">
@@ -29,10 +33,7 @@ export default function Patient() {
               <span className="text-destructive">-8,000.00 DA</span>
             </p>
           </div>
-          <div className="flex space-x-2">
-            <Button variant="outline">Patient Arrived</Button>
-            <Button>Save</Button>
-          </div>
+          <Button onClick={handleSave}>Save</Button>
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex space-x-2 mb-4 overflow-x-auto snap-x snap-mandatory scrollbar-thin scrollbar-thumb-muted scrollbar-track-muted-foreground/10 md:overflow-x-hidden">
@@ -54,7 +55,7 @@ export default function Patient() {
                   : ""
               }
             >
-              Follow-up
+              Follow Up
             </TabsTrigger>
             <TabsTrigger
               value="finance"
@@ -67,26 +68,26 @@ export default function Patient() {
               Finance
             </TabsTrigger>
             <TabsTrigger
-              value="rendez-vous"
+              value="appointments"
               className={
-                activeTab === "rendez-vous"
+                activeTab === "appointments"
                   ? "bg-primary text-primary-foreground"
                   : ""
               }
             >
-              Rendez-vous
+              Appointments
             </TabsTrigger>
           </TabsList>
           <TabsContent value="patient-record">
             <PatientRecord />
           </TabsContent>
           <TabsContent value="follow-up">
-            <FollowUp />
+            <FollowUp / >
           </TabsContent>
           <TabsContent value="finance">
             <Finance />
           </TabsContent>
-          <TabsContent value="rendez-vous">
+          <TabsContent value="appointments">
             <Appointments />
           </TabsContent>
         </Tabs>

@@ -1,3 +1,4 @@
+import { useEffect, useState, useContext } from "react";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -8,12 +9,34 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import PatientContext from "../../context/PatientProvider";
+import api from "../../api";
 
 const FollowUp = () => {
+  const [data, setData] = useState([]);
+  const { patientInfo } = useContext(PatientContext);
+  console.log(patientInfo);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await api.get(`/api/treatments/patient/${patientId}`);
+        const jsonData = response.data;
+        setData(jsonData);
+        console.log("Data fetched:", jsonData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    if (patientId) {
+      fetchData();
+    }
+  }, [patientId]);
+
   return (
     <Card className="p-4">
       <div className="space-y-4">
-        {/* <div>
+        <div>
           <h3 className="text-md font-bold mb-2">EndoBuccal Examinations</h3>
           <Table>
             <TableHeader>
@@ -25,24 +48,20 @@ const FollowUp = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell>2023-06-15 10:30 AM</TableCell>
-                <TableCell>Dr. John Doe</TableCell>
-                <TableCell>Teeth cleaning and scaling</TableCell>
-                <TableCell>Patient responded well to treatment</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>2023-05-20 2:00 PM</TableCell>
-                <TableCell>Dr. Jane Smith</TableCell>
-                <TableCell>Cavity filling</TableCell>
-                <TableCell>Patient reported no pain after procedure</TableCell>
-              </TableRow>
+              {data.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.dateTime}</TableCell>
+                  <TableCell>{item.leadParticipant}</TableCell>
+                  <TableCell>{item.recentTreatmentPlan}</TableCell>
+                  <TableCell>{item.notes}</TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
-        </div> */}
+        </div>
         <div>
           <h3 className="text-md font-bold mb-2">Care History</h3>
-          <Table>
+          <Table className="text-nowrap">
             <TableHeader>
               <TableRow>
                 <TableHead>Treatment</TableHead>
@@ -54,26 +73,18 @@ const FollowUp = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell>Teeth cleaning</TableCell>
-                <TableCell>2023-06-01</TableCell>
-                <TableCell>30 minutes</TableCell>
-                <TableCell>Dr. John Doe</TableCell>
-                <TableCell>Patient had no issues</TableCell>
-                <TableCell>
-                  <Button variant="outline">View Treatment Plan</Button>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Cavity filling</TableCell>
-                <TableCell>2023-05-15</TableCell>
-                <TableCell>1 hour</TableCell>
-                <TableCell>Dr. Jane Smith</TableCell>
-                <TableCell>Patient reported no pain</TableCell>
-                <TableCell>
-                  <Button variant="outline">View Treatment Plan</Button>
-                </TableCell>
-              </TableRow>
+              {data.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.treatment}</TableCell>
+                  <TableCell>{item.startDate}</TableCell>
+                  <TableCell>{item.duration}</TableCell>
+                  <TableCell>{item.participant}</TableCell>
+                  <TableCell>{item.notes}</TableCell>
+                  <TableCell>
+                    <Button variant="outline">View Treatment Plan</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </div>

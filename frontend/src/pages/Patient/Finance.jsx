@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 const Finance = () => {
   return (
     <Card>
-      <Table>
+      <Table className="text-nowrap">
         <TableHeader>
           <TableRow>
             <TableHead>Status</TableHead>

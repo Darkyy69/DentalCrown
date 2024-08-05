@@ -201,7 +201,7 @@ const Appointments = () => {
           </Drawer>
         </div>
       </div>
-      <Table>
+      <Table className="text-nowrap">
         <TableHeader>
           <TableRow>
             <TableHead>Doctor</TableHead>
