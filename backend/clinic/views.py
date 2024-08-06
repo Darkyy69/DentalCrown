@@ -4,9 +4,9 @@ from django.contrib.auth import get_user_model
 from rest_framework.response import Response
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
-from .models import Establishment, Patient, Speciality, DentalService, SubCategoryService, Appointment, Treatment, Payment, Consumable, Diagnostic
+from .models import Establishment, Patient, Speciality, DentalService, SubCategoryService, Appointment, Treatment, Payment, Consumable, Diagnostic, SubSubCategoryService
 from .serializers import AppointmentSerializer
-from .serializers import PatientSerializer, AppointmentSerializer, PaymentSerializer, EstablishmentSerializer, SpecialitySerializer, DentalServiceSerializer, SubCategoryServiceSerializer, TreatmentSerializer, ConsumableSerializer, DiagnosticSerializer
+from .serializers import PatientSerializer, AppointmentSerializer, PaymentSerializer, EstablishmentSerializer, SpecialitySerializer, DentalServiceSerializer, SubCategoryServiceSerializer, TreatmentSerializer, ConsumableSerializer, DiagnosticSerializer, SubSubCategoryServiceSerializer
 from clinic.utils import broadcast_payment_popup, unicast_payment_popup, disable_receptionist_payment_popup
 from notification.models import PaymentNotification, AppointmentNotification
 from notification.tasks import check_payment_flag
@@ -32,6 +32,12 @@ class PatientViewSet(viewsets.ModelViewSet):
 class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
+    
+    @action(detail=False, methods=['get'], url_path='patient/(?P<patient_id>[^/.]+)')
+    def patient_appointments(self, request, patient_id=None):
+        appointments = Appointment.objects.filter(patient_id=patient_id)
+        serializer = self.get_serializer(appointments, many=True)
+        return Response(serializer.data)
     
     def partial_update(self, request, *args, **kwargs):
         kwargs['partial'] = True
@@ -94,6 +100,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
 
+    @action(detail=False, methods=['get'], url_path='patient/(?P<patient_id>[^/.]+)')
+    def patient_payments(self, request, patient_id=None):
+        payments = Payment.objects.filter(patient_id=patient_id)
+        serializer = self.get_serializer(payments, many=True)
+        return Response(serializer.data)
     # override the create method to add custom logic
     def create(self, request, *args, **kwargs):
         # Call the parent class create method
@@ -174,6 +185,10 @@ class DentalServiceViewSet(viewsets.ModelViewSet):
 class SubCategoryServiceViewSet(viewsets.ModelViewSet):
     queryset = SubCategoryService.objects.all()
     serializer_class = SubCategoryServiceSerializer
+
+class SubSubCategoryServiceViewSet(viewsets.ModelViewSet):
+    queryset = SubSubCategoryService.objects.all()
+    serializer_class = SubSubCategoryServiceSerializer    
 
 class TreatmentViewSet(viewsets.ModelViewSet):
     queryset = Treatment.objects.all()

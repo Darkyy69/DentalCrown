@@ -386,7 +386,7 @@ import {
 import { DatePickerWithPresets } from "./DatePickerWithPresets";
 
 const MyCalendar_Testing = () => {
-  const hours = Array.from({ length: 16 }, (_, i) => 6 + i); // Hours from 6:00 to 22:00 (10 PM)
+  const hours = Array.from({ length: 13 }, (_, i) => 9 + i); // Hours from 9:00 to 22:00 (10 PM)
 
   // Get current week days
   const startOfCurrentWeek = startOfWeek(new Date(), { weekStartsOn: 0 }); // Assuming the week starts on Monday
@@ -397,11 +397,11 @@ const MyCalendar_Testing = () => {
   // Example event data with `day` as `Date`
   const events = [
     {
-      day: parseISO("2024-07-09"), // Monday
-      startTime: 6,
-      endTime: 9,
-      formatedStartTime: "6:00",
-      formatedEndTime: "9:00",
+      day: parseISO("2024-08-05"), // Monday
+      startTime: 9,
+      endTime: 12,
+      formatedStartTime: "9:00",
+      formatedEndTime: "12:00",
       title: "BOUZID Mohammed",
       duration: "3h",
       dentist: {
@@ -412,9 +412,11 @@ const MyCalendar_Testing = () => {
       borderColor: "border-green-600",
     },
     {
-      day: parseISO("2024-07-08"), // Monday
+      day: parseISO("2024-08-08"), // Monday
       startTime: 10,
       endTime: 12,
+      formatedStartTime: "10:00",
+      formatedEndTime: "12:00",
       title: "Umbrella Academy",
       duration: "3h",
       dentist: {
@@ -425,11 +427,11 @@ const MyCalendar_Testing = () => {
       borderColor: "border-green-600",
     },
     {
-      day: parseISO("2024-07-10"), // Tuesday
-      startTime: 7,
-      endTime: 7.5,
-      formatedStartTime: "7:00",
-      formatedEndTime: "7:30",
+      day: parseISO("2024-08-10"), // Tuesday
+      startTime: 9,
+      endTime: 9.5,
+      formatedStartTime: "9:00",
+      formatedEndTime: "9:30",
       title: "ABDELAIDOUM Amina",
       duration: "30 min",
       dentist: {
@@ -451,7 +453,7 @@ const MyCalendar_Testing = () => {
               <div
                 className={`absolute text-sm w-full overflow-hidden left-0 ${event.color} border-t-4 ${event.borderColor} p-2 cursor-pointer`}
                 style={{
-                  top: `${(event.startTime - 6) * 6}rem`,
+                  top: `${(event.startTime - 9) * 9}rem`,
                   height: `${(event.endTime - event.startTime) * 6}rem`,
                 }}
               >

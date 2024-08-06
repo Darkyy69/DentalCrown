@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from user.serializers import CustomUserSerializer
 from user.models import CustomUser
-from .models import Establishment, Patient, Speciality, DentalService, SubCategoryService, Appointment, Treatment, Payment, Consumable, Diagnostic
+from .models import Establishment, Patient, Speciality, DentalService, SubCategoryService, SubSubCategoryService, Appointment, Treatment, Payment, Consumable, Diagnostic
 
 class EstablishmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,6 +27,11 @@ class SubCategoryServiceSerializer(serializers.ModelSerializer):
         model = SubCategoryService
         fields = '__all__'
 
+class SubSubCategoryServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubSubCategoryService
+        fields = '__all__'        
+
 class ConsumableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Consumable
@@ -36,11 +41,14 @@ class PatientSerializer(serializers.ModelSerializer):
     dentist = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
     full_name = serializers.SerializerMethodField()
     age = serializers.SerializerMethodField()
+    total_treatment_amount = serializers.SerializerMethodField()
+    payed = serializers.SerializerMethodField()
+    left_to_pay = serializers.SerializerMethodField()
 
 
     class Meta:
         model = Patient
-        fields = ['id', 'first_name', 'last_name', 'date_of_birth', 'phone_number', 'email', 'address', 'gender', 'dentist', 'full_name', 'age']
+        fields = ['id', 'first_name', 'last_name', 'date_of_birth', 'phone_number', 'email', 'address', 'gender', 'dentist', 'full_name', 'age', 'payed', 'left_to_pay', 'total_treatment_amount']
 
     def get_full_name(self, obj):
         # Define titles based on gender
@@ -68,14 +76,33 @@ class PatientSerializer(serializers.ModelSerializer):
         representation['dentist'] = CustomUserSerializer(instance.dentist).data
         return representation
     
+    def get_total_treatment_amount(self, obj):
+        treatments = Treatment.objects.filter(patient=obj)
+        total_treatment_amount = sum(float(treatment.price) for treatment in treatments)
+        return total_treatment_amount
+    
+    def get_payed(self, obj):
+        payments = Payment.objects.filter(patient=obj)
+        payed = sum(float(payment.amount) for payment in payments)
+        return payed
+
+    def get_left_to_pay(self, obj):
+        left_to_pay = self.get_total_treatment_amount(obj) - self.get_payed(obj)
+        return left_to_pay
+    
 
 class TreatmentSerializer(serializers.ModelSerializer):
     patient = PatientSerializer()
     dentist = CustomUserSerializer()
     diagnostic = DiagnosticSerializer()
+    status_display = serializers.SerializerMethodField()
     class Meta:
         model = Treatment
         fields = '__all__'
+
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+    
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
@@ -95,10 +122,11 @@ class PaymentSerializer(serializers.ModelSerializer):
     patient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all())
     dentist = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
     treatment = serializers.PrimaryKeyRelatedField(queryset=Treatment.objects.all())
+    left_to_distribute = serializers.SerializerMethodField()
 
     class Meta:
         model = Payment
-        fields = ['id', 'patient', 'dentist', 'treatment', 'current_user', 'date', 'amount']
+        fields = ['id', 'patient', 'dentist', 'treatment', 'current_user', 'date', 'amount', 'left_to_distribute']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -106,3 +134,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         representation['patient'] = PatientSerializer(instance.patient).data
         representation['treatment'] = TreatmentSerializer(instance.treatment).data
         return representation
+    
+    def get_left_to_distribute(self, obj):
+        payments = Payment.objects.filter(treatment=obj.treatment)
+        return float(obj.treatment.price) - sum(float(payment.amount) for payment in payments)

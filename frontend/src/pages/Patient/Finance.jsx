@@ -1,3 +1,7 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
+import api from "../../api";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -8,8 +12,55 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 const Finance = () => {
+  const { patientId } = useParams();
+  const [payments, setPayments] = useState([]);
+  const [groupedPayments, setGroupedPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        const response = await api.get(
+          `http://localhost:8000/api/payments/patient/${patientId}`
+        );
+        console.log(response.data);
+        setPayments(response.data);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, [patientId]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error loading payments: {error.message}</div>;
+
+  // const groupedPayments = payments.reduce((acc, payment) => {
+  //   const existingPayment = acc.find(
+  //     (p) => p.treatment.id === payment.treatment.id
+  //   );
+  //   if (existingPayment) {
+  //     existingPayment.amount += +payment.amount;
+  //     existingPayment.left_to_distribute = +payment.left_to_distribute;
+  //     existingPayment.date = payment.date;
+  //   } else {
+  //     acc.push(payment);
+  //   }
+  //   return acc;
+  // }, []);
+
   return (
     <Card>
       <Table className="text-nowrap">
@@ -25,39 +76,75 @@ const Finance = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow>
-            <TableCell>
-              <CircleCheckIcon className="text-green-500" />
-            </TableCell>
-            <TableCell>$500</TableCell>
-            <TableCell>$500</TableCell>
-            <TableCell>Dr. John Doe</TableCell>
-            <TableCell>2023-06-15</TableCell>
-            <TableCell>2023-06-20</TableCell>
-            <TableCell>$0</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>
-              <CircleIcon className="text-yellow-500" />
-            </TableCell>
-            <TableCell>$800</TableCell>
-            <TableCell>$600</TableCell>
-            <TableCell>Dr. Jane Smith</TableCell>
-            <TableCell>2023-05-20</TableCell>
-            <TableCell>2023-06-01</TableCell>
-            <TableCell>$200</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>
-              <CircleIcon className="text-yellow-500" />
-            </TableCell>
-            <TableCell>$300</TableCell>
-            <TableCell>$150</TableCell>
-            <TableCell>Dr. John Doe</TableCell>
-            <TableCell>2023-04-10</TableCell>
-            <TableCell>2023-05-01</TableCell>
-            <TableCell>$150</TableCell>
-          </TableRow>
+          {payments.map((payment) => (
+            // {groupedPayments.map((payment) => (
+            <>
+              <TableRow
+                key={payment.id}
+                className="cursor-pointer"
+                onClick={() => {
+                  setIsOpen(true);
+                }}
+              >
+                <TableCell>
+                  {payment.left_to_distribute === 0 ? (
+                    <CircleCheckIcon className="text-green-500" />
+                  ) : (
+                    <CircleIcon className="text-yellow-500" />
+                  )}
+                </TableCell>
+                <TableCell>${payment.treatment.price}</TableCell>
+                <TableCell>${payment.amount}</TableCell>
+                <TableCell>{payment.dentist.full_name}</TableCell>
+                <TableCell>
+                  {new Date(payment.treatment.start_date).toLocaleString(
+                    "en-GB"
+                  )}
+                </TableCell>
+                <TableCell>
+                  {new Date(payment.date).toLocaleString("en-GB")}
+                </TableCell>
+                <TableCell>${payment.left_to_distribute}</TableCell>
+              </TableRow>
+              <Collapsible
+                open={isOpen}
+                onOpenChange={setIsOpen}
+                key={payment.id}
+              >
+                <CollapsibleContent>
+                  {payments.map((payment) => (
+                    <TableRow
+                      key={payment.id}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        setIsOpen(true);
+                      }}
+                    >
+                      <TableCell>
+                        {payment.left_to_distribute === 0 ? (
+                          <CircleCheckIcon className="text-green-500" />
+                        ) : (
+                          <CircleIcon className="text-yellow-500" />
+                        )}
+                      </TableCell>
+                      <TableCell>${payment.treatment.price}</TableCell>
+                      <TableCell>${payment.amount}</TableCell>
+                      <TableCell>{payment.dentist.full_name}</TableCell>
+                      <TableCell>
+                        {new Date(payment.treatment.start_date).toLocaleString(
+                          "en-GB"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(payment.date).toLocaleString("en-GB")}
+                      </TableCell>
+                      <TableCell>${payment.left_to_distribute}</TableCell>
+                    </TableRow>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            </>
+          ))}
         </TableBody>
       </Table>
     </Card>

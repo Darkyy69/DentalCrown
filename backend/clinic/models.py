@@ -52,18 +52,29 @@ class Speciality(models.Model):
     
 class DentalService(models.Model):
     speciality = models.ForeignKey(Speciality, related_name='clinic', on_delete=models.CASCADE)
-    service_name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    has_subcategories = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.service_name
+        return self.name
 class SubCategoryService(models.Model):
     category = models.ForeignKey(DentalService, related_name='clinic', on_delete=models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-
+    has_subcategories = models.BooleanField(default=False)
+    
     def __str__(self):
-        return self.name    
+        return self.name   
+
+class SubSubCategoryService(models.Model):
+    subcategory = models.ForeignKey(SubCategoryService, related_name='clinic', on_delete=models.CASCADE, blank=True, null=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    
+    def __str__(self):
+        return self.name  
+      
 class Diagnostic(models.Model):
     name = models.CharField(max_length=255)
 
@@ -84,12 +95,13 @@ class Treatment(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.DO_NOTHING)
     dentist = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, limit_choices_to={'role': 'dentist'})
     teeth = models.ManyToManyField(Tooth)
-    start_date = models.DateField(editable=False, default=date.today)
-    end_date = models.DateField(blank=True, null=True)
+    start_date = models.DateTimeField(editable=False, default=datetime.today)
+    end_date = models.DateTimeField(editable=False, blank=True, null=True)
     # diagnostic would be choisable from a list of possible diagnostics
-    diagnostic = models.ForeignKey(Diagnostic, on_delete=models.CASCADE)
+    diagnostic = models.ForeignKey(Diagnostic, on_delete=models.CASCADE, null=True, blank=True)
     notes = models.TextField(max_length=1000, blank=True, null=True)
     price = models.FloatField()
+    treatment_name = models.CharField(max_length=255)
     status = models.TextField(max_length=100, default='P', choices=[
         ('D', 'Done'),
         ('P', 'Pending'),
@@ -102,11 +114,11 @@ class Treatment(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.start_date:
-            self.start_date = date.today()
+            self.start_date = datetime.today()
 
         # If status is set to 'D', set end_date to today's date
         if self.status == 'D' or self.status == 'C':
-            self.end_date = date.today()
+            self.end_date = datetime.today()
 
         # Ensure status cannot be changed from 'D' to another status
         if self.pk is not None:  # Check if this is an update to an existing record
@@ -175,7 +187,6 @@ def mark_notification_opened(sender, instance, **kwargs):
     # Before saving the payment, check if the payment is already created
     # If it is, mark the appointment notification as opened
     # If it is not, create a new appointment notification
-    print("zb")
     payment_date = instance.date or datetime.now().date()
     payment_treatment = instance.treatment
     payment_patient = instance.patient

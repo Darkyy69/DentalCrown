@@ -6,11 +6,12 @@ import FollowUp from "./FollowUp";
 import Finance from "./Finance";
 import Appointments from "./Appointments";
 import PatientContext, { PatientProvider } from "../../context/PatientProvider";
+import TreatmentPlan from "./TreatmentPlan";
 
 export default function Patient() {
   const [activeTab, setActiveTab] = useState("patient-record");
   const { patientInfo } = useContext(PatientContext);
-
+  const currency = "DA";
   const handleSave = () => {
     // Implement the save logic here
     console.log("Save button clicked ");
@@ -27,10 +28,14 @@ export default function Patient() {
                 : "Loading..."}
             </h1>
             <p className="text-sm lg:text-base">
-              Listed price: | Done and in progress:{" "}
-              <span className="text-primary">0.00 DA</span>| Total:{" "}
-              <span className="text-primary">8,000.00 DA</span>| Unpaid:{" "}
-              <span className="text-destructive">-8,000.00 DA</span>
+              Total Amount:{" "}
+              <span className="text-primary">
+                {patientInfo.total_treatment_amount}{currency}{" "}
+              </span>
+              | Paid:{" "}
+              <span className="text-primary">{patientInfo.payed}{currency}{" "}</span>|
+              Unpaid:{" "}
+              <span className="text-destructive">{patientInfo.left_to_pay}{currency}</span>
             </p>
           </div>
           <Button onClick={handleSave}>Save</Button>
@@ -77,18 +82,31 @@ export default function Patient() {
             >
               Appointments
             </TabsTrigger>
+            <TabsTrigger
+              value="treatment-plan"
+              className={
+                activeTab === "treatment-plan"
+                  ? "bg-primary text-primary-foreground"
+                  : ""
+              }
+            >
+              Treatment Plan
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="patient-record">
             <PatientRecord />
           </TabsContent>
           <TabsContent value="follow-up">
-            <FollowUp / >
+            <FollowUp />
           </TabsContent>
           <TabsContent value="finance">
             <Finance />
           </TabsContent>
           <TabsContent value="appointments">
             <Appointments />
+          </TabsContent>
+          <TabsContent value="treatment-plan">
+            <TreatmentPlan />
           </TabsContent>
         </Tabs>
       </div>

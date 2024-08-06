@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Establishment, Patient, Speciality, SubCategoryService, DentalService, Appointment, Payment, Treatment, Consumable, Diagnostic, Tooth
+from .models import Establishment, Patient, Speciality, SubCategoryService, DentalService, Appointment, Payment, Treatment, Consumable, Diagnostic, Tooth, SubSubCategoryService
 
 admin.site.register(Establishment)
 admin.site.register(Patient)
@@ -12,3 +12,4 @@ admin.site.register(Treatment)
 admin.site.register(Consumable)
 admin.site.register(Diagnostic)
 admin.site.register(Tooth)
+admin.site.register(SubSubCategoryService)
