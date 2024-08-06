@@ -63,7 +63,7 @@ const FollowUp = () => {
               ) : (
                 data.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.diagnostic.name}</TableCell>
+                    <TableCell>{item.treatment_name}</TableCell>
                     <TableCell>
                       {
                         new Date(item.start_date)

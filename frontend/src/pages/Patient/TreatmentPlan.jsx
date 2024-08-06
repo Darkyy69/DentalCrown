@@ -28,11 +28,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { CalendarPlus, Pen, ChevronDown, ChevronUp } from "lucide-react";
+import { CalendarPlus, Pen, ChevronLeft, ChevronDown } from "lucide-react";
 import teethImage from "../../assets/teeth.png";
 import { useParams } from "react-router-dom";
 import api from "../../api";
+import { ACCESS_TOKEN } from "/src/constants";
+import { useToast } from "@/components/ui/use-toast"
+import { jwtDecode } from "jwt-decode";
 
 const TreatmentPlan = () => {
   const teethNumbers = [
@@ -148,14 +159,34 @@ const TreatmentPlan = () => {
             {renderTeeth(teethNumbers.slice(24, 32))}
           </div>
         </div>
-        <div style={{ flex: "2" }}>
-          <TreatmentPlanServices />
+        <div
+          className="h-[475px] overflow-y-scroll text-right"
+          style={{ flex: "2" }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center">General Info</CardTitle>
+              <CardDescription className="text-center">
+                Card Description for later...
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* <p>Card Content</p> */}
+              <TreatmentPlanServices
+                patientId={patientId}
+                selectedTeeth={selectedTeeth}
+              />
+            </CardContent>
+            {/* <CardFooter>
+    <p>Card Footer</p>
+  </CardFooter> */}
+          </Card>
         </div>
       </div>
 
       <div style={{ marginTop: "20px" }}>
-        <Table>
-          <TableHeader>
+        <Table className="text-nowrap">
+          <TableHeader className="bg-slate-100">
             <TableRow>
               <TableHead>Detail</TableHead>
               <TableHead>Teeth</TableHead>
@@ -171,7 +202,7 @@ const TreatmentPlan = () => {
             {treatments.map((treatment) => (
               <TableRow key={treatment.id}>
                 <TableCell>Traitement General</TableCell>
-                <TableCell>{treatment.teeth}</TableCell>
+                <TableCell>{treatment.teeth.join(", ")}</TableCell>
                 <TableCell>{treatment.diagnostic.name}</TableCell>
                 <TableCell>{treatment.treatment_name}</TableCell>
                 <TableCell>{treatment.price}</TableCell>
@@ -277,11 +308,14 @@ const TreatmentPlan = () => {
 
 export default TreatmentPlan;
 
-const TreatmentPlanServices = () => {
+const TreatmentPlanServices = ({ patientId, selectedTeeth }) => {
   const [speciality, setSpeciality] = useState([]);
   const [services, setServices] = useState([]);
   const [subServices, setSubServices] = useState([]);
   const [subSubServices, setSubSubServices] = useState([]);
+  const [openItems, setOpenItems] = useState({}); // State to track open/closed state
+  const token = jwtDecode(localStorage.getItem(ACCESS_TOKEN));
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchSpeciality = async () => {
@@ -302,34 +336,113 @@ const TreatmentPlanServices = () => {
     fetchSpeciality();
   }, []);
 
+  const handleToggle = (id) => {
+    setOpenItems((prevOpenItems) => ({
+      ...prevOpenItems,
+      [id]: !prevOpenItems[id], // Toggle the open state
+    }));
+  };
+
+  const createTreatment = async (service, options = {}) => {
+    console.log("service name: " + service.name);
+    var treatment_name = service.name;
+    const { subService = null, subSubService = null } = options;
+
+    if (subService) {
+      treatment_name = treatment_name + " - " + subService.name;
+    }
+    if (subSubService) {
+      treatment_name = treatment_name + " - " + subSubService.name;
+    }
+    const general_treatments = ["Consultation générale", "Détartrage"];
+    const data = {
+      patient: patientId,
+      dentist: token.user_id,
+      teeth: selectedTeeth,
+      diagnostic: "2",
+      notes: "",
+      price: 2000,
+      treatment_name: treatment_name,
+      status: "P",
+    };
+    console.log(service);
+    console.log(data);
+    if (data.teeth.length === 0 && general_treatments.includes(service.name)) {
+      try {
+        const response = await api.post(`/api/treatments/`, data);
+        console.log(response.data);
+        toast({
+        variant: "success",
+        title: "Success",
+        description: "Successs: you must select at least a tooth first for this type of treatment!",
+      });
+      } catch (error) {
+        console.error("Error fetching treatments:", error);
+        toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error: ",
+      });
+      }
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error: you must select at least a tooth first for this type of treatment!",
+      });
+    }
+  };
   return (
     <>
       {speciality.map((sp) => (
         <Collapsible key={sp.id}>
-          <CollapsibleTrigger>
-            <div className="rounded-md border px-4 py-3 font-medium text-sm">
-              <div className="flex gap-2">
-                {sp.name}
-                <ChevronDown />
+          <CollapsibleTrigger
+            onClick={() => handleToggle(sp.id)}
+            className="w-full"
+          >
+            <div className="rounded-md border px-4 py-3 mb-1 font-medium text-sm">
+              <div className="flex justify-between items-center">
+                <span>{sp.name}</span>
+                {openItems[sp.id] ? <ChevronDown /> : <ChevronLeft />}
               </div>
             </div>
           </CollapsibleTrigger>
-          <CollapsibleContent className="ml-4">
-            {/* Content for speciality */}
+          <CollapsibleContent
+            className="CollapsibleContent"
+            open={openItems[sp.id]}
+          >
             {services
               .filter((service) => service.speciality === sp.id)
               .map((service) => (
                 <Collapsible key={service.id}>
-                  <CollapsibleTrigger>
-                    <div className="rounded-md border px-4 py-3 font-mono text-sm bg-red-300">
-                      <div className="flex gap-2">
-                        {service.name}
-                        <ChevronDown />
+                  <CollapsibleTrigger
+                    className="w-4/5"
+                    onClick={() => handleToggle(service.id)}
+                  >
+                    <div
+                      className="rounded-md border px-4 py-3 font-medium text-sm bg-red-300"
+                      onClick={() => {
+                        if (!service.has_subcategories) {
+                          console.log("creating treatment...");
+                          createTreatment(service);
+                        }
+                      }}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span>{service.name}</span>
+                        {service.has_subcategories &&
+                          (openItems[service.id] ? (
+                            <ChevronDown />
+                          ) : (
+                            <ChevronLeft />
+                          ))}
                       </div>
                     </div>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="ml-4">
-                    {/* Content for service */}
+                  <CollapsibleContent
+                    className="ml-4 CollapsibleContent"
+                    open={openItems[service.id]}
+                  >
                     {subServices
                       .filter(
                         (subService) =>
@@ -338,13 +451,36 @@ const TreatmentPlanServices = () => {
                       )
                       .map((subService) => (
                         <Collapsible key={subService.id}>
-                          <CollapsibleTrigger>
-                            <div className="rounded-md border px-4 py-3 font-mono text-sm bg-pink-300">
-                              {subService.name}
+                          <CollapsibleTrigger
+                            className="w-3/5"
+                            onClick={() => handleToggle(subService.id)}
+                          >
+                            <div
+                              className="rounded-md border px-4 py-3 font-medium text-sm bg-pink-300"
+                              onClick={() => {
+                                if (!subService.has_subcategories) {
+                                  console.log("creating treatment...");
+                                  createTreatment(service, {
+                                    subService: subService,
+                                  });
+                                }
+                              }}
+                            >
+                              <div className="flex justify-between items-center">
+                                <span>{subService.name}</span>
+                                {subService.has_subcategories &&
+                                  (openItems[subService.id] ? (
+                                    <ChevronDown />
+                                  ) : (
+                                    <ChevronLeft />
+                                  ))}
+                              </div>
                             </div>
                           </CollapsibleTrigger>
-                          <CollapsibleContent>
-                            {/* Content for subService */}
+                          <CollapsibleContent
+                            className="CollapsibleContent"
+                            open={openItems[subService.id]}
+                          >
                             {subSubServices
                               .filter(
                                 (subSubService) =>
@@ -353,12 +489,29 @@ const TreatmentPlanServices = () => {
                               )
                               .map((subSubService) => (
                                 <Collapsible key={subSubService.id}>
-                                  <CollapsibleTrigger>
-                                    <div className="rounded-md border px-4 py-3 font-mono text-sm">
+                                  <CollapsibleTrigger
+                                    className="w-2/5"
+                                    onClick={() =>
+                                      handleToggle(subSubService.id)
+                                    }
+                                  >
+                                    <div
+                                      className="rounded-md border px-4 py-3 font-medium text-sm bg-purple-400"
+                                      onClick={() => {
+                                        console.log("creating treatment...");
+                                        createTreatment(service, {
+                                          subService: subService,
+                                          subSubService: subSubService,
+                                        });
+                                      }}
+                                    >
                                       {subSubService.name}
                                     </div>
                                   </CollapsibleTrigger>
-                                  <CollapsibleContent>
+                                  <CollapsibleContent
+                                    className="CollapsibleContent"
+                                    open={openItems[subSubService.id]}
+                                  >
                                     {/* Content for subSubService */}
                                   </CollapsibleContent>
                                 </Collapsible>

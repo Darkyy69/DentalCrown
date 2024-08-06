@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from user.serializers import CustomUserSerializer
 from user.models import CustomUser
-from .models import Establishment, Patient, Speciality, DentalService, SubCategoryService, SubSubCategoryService, Appointment, Treatment, Payment, Consumable, Diagnostic
+from .models import Establishment, Patient, Speciality, DentalService, SubCategoryService, SubSubCategoryService, Appointment, Treatment, Payment, Consumable, Diagnostic, Tooth
 
 class EstablishmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -90,18 +90,34 @@ class PatientSerializer(serializers.ModelSerializer):
         left_to_pay = self.get_total_treatment_amount(obj) - self.get_payed(obj)
         return left_to_pay
     
+class ToothSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tooth
+        fields = '__all__'
+
 
 class TreatmentSerializer(serializers.ModelSerializer):
-    patient = PatientSerializer()
-    dentist = CustomUserSerializer()
-    diagnostic = DiagnosticSerializer()
+    patient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all())
+    dentist = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+    diagnostic = serializers.PrimaryKeyRelatedField(queryset=Diagnostic.objects.all())
+
     status_display = serializers.SerializerMethodField()
     class Meta:
         model = Treatment
-        fields = '__all__'
+        fields = ['id', 'patient', 'dentist', 'teeth', 'start_date', 'end_date', 'diagnostic', 'notes', 'price', 'treatment_name', 'status', 'status_display', 'consumable']
+        # fields = '__all__'
 
     def get_status_display(self, obj):
         return obj.get_status_display()
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['dentist'] = CustomUserSerializer(instance.dentist).data
+        representation['patient'] = PatientSerializer(instance.patient).data
+        representation['diagnostic'] = DiagnosticSerializer(instance.diagnostic).data
+        return representation
+    
+
     
 
 

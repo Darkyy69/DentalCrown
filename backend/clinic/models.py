@@ -94,11 +94,11 @@ class Tooth(models.Model):
 class Treatment(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.DO_NOTHING)
     dentist = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, limit_choices_to={'role': 'dentist'})
-    teeth = models.ManyToManyField(Tooth)
+    teeth = models.ManyToManyField(Tooth, blank=True)
     start_date = models.DateTimeField(editable=False, default=datetime.today)
     end_date = models.DateTimeField(editable=False, blank=True, null=True)
     # diagnostic would be choisable from a list of possible diagnostics
-    diagnostic = models.ForeignKey(Diagnostic, on_delete=models.CASCADE, null=True, blank=True)
+    diagnostic = models.ForeignKey(Diagnostic, on_delete=models.CASCADE, blank=True, null=True)
     notes = models.TextField(max_length=1000, blank=True, null=True)
     price = models.FloatField()
     treatment_name = models.CharField(max_length=255)
