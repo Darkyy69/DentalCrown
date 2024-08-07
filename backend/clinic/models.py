@@ -55,7 +55,13 @@ class DentalService(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     has_subcategories = models.BooleanField(default=False)
+    price = models.FloatField(blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        if self.has_subcategories:
+            self.price = None
+        super().save(*args, **kwargs)   
+    
     def __str__(self):
         return self.name
 class SubCategoryService(models.Model):
@@ -63,6 +69,12 @@ class SubCategoryService(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     has_subcategories = models.BooleanField(default=False)
+    price = models.FloatField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.has_subcategories:
+            self.price = None
+        super().save(*args, **kwargs) 
     
     def __str__(self):
         return self.name   
@@ -71,6 +83,7 @@ class SubSubCategoryService(models.Model):
     subcategory = models.ForeignKey(SubCategoryService, related_name='clinic', on_delete=models.CASCADE, blank=True, null=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    price = models.FloatField(blank=True, null=True)
     
     def __str__(self):
         return self.name  
@@ -92,13 +105,13 @@ class Tooth(models.Model):
         return self.code    
     
 class Treatment(models.Model):
-    patient = models.ForeignKey(Patient, on_delete=models.DO_NOTHING)
-    dentist = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, limit_choices_to={'role': 'dentist'})
+    patient = models.ForeignKey(Patient, on_delete=models.SET_NULL, null=True)
+    dentist = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, limit_choices_to={'role': 'dentist'})
     teeth = models.ManyToManyField(Tooth, blank=True)
     start_date = models.DateTimeField(editable=False, default=datetime.today)
     end_date = models.DateTimeField(editable=False, blank=True, null=True)
     # diagnostic would be choisable from a list of possible diagnostics
-    diagnostic = models.ForeignKey(Diagnostic, on_delete=models.CASCADE, blank=True, null=True)
+    diagnostic = models.ForeignKey(Diagnostic, on_delete=models.SET_NULL, blank=True, null=True)
     notes = models.TextField(max_length=1000, blank=True, null=True)
     price = models.FloatField()
     treatment_name = models.CharField(max_length=255)
@@ -107,7 +120,7 @@ class Treatment(models.Model):
         ('P', 'Pending'),
         ('C', 'Canceled'),
     ])
-    consumable = models.ForeignKey('Consumable', on_delete=models.DO_NOTHING, blank=True, null=True)
+    consumable = models.ForeignKey('Consumable', on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return f"Treatment for {self.patient} started on {self.start_date}"
@@ -134,7 +147,7 @@ class Appointment(models.Model):
     date = models.DateField()
     start_hour = models.TimeField(default='00:00:00')
     end_hour = models.TimeField(default='00:00:00')
-    treatment = models.ForeignKey(Treatment, on_delete=models.DO_NOTHING)
+    treatment = models.ForeignKey(Treatment, on_delete=models.SET_NULL, null=True)
     status = models.CharField(max_length=2, default='P', choices
     =[
         ('D', 'Done'),
@@ -174,7 +187,7 @@ def validate_treatment_patient_relation(sender, instance, **kwargs):
 class Payment(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.DO_NOTHING)
     dentist = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING)
-    treatment = models.ForeignKey(Treatment, on_delete=models.DO_NOTHING)
+    treatment = models.ForeignKey(Treatment, on_delete=models.SET_NULL, null=True)
     current_user = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, related_name='current_user')
     date = models.DateTimeField(auto_now_add=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)

@@ -21,9 +21,8 @@ class CustomUserManager(BaseUserManager):
     
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
-        ('admin', 'Administrator'),
-        ('receptionist', 'Receptionist'),
         ('dentist', 'Dentist'),
+        ('receptionist', 'Receptionist'),
     )
     gender = models.CharField(max_length=1, choices
     =(

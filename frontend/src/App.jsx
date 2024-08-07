@@ -65,7 +65,7 @@ function App() {
             <Route
               element={
                 <PrivateRoutes
-                  allowedRoles={["admin", "receptionist", "dentist"]}
+                  allowedRoles={["receptionist", "dentist"]}
                 />
               }
             >
@@ -102,7 +102,7 @@ function App() {
 
               <Route
                 element={
-                  <PrivateRoutes allowedRoles={["admin", "receptionist"]} />
+                  <PrivateRoutes allowedRoles={["admin"]} />
                 }
               >
                 <Route path="/clinic" element={<Clinic />} />

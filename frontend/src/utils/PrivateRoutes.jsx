@@ -76,13 +76,21 @@ function PrivateRoutes({ allowedRoles }) {
 
   // return isAuthorized ? children : <Navigate to="/login" />;
 
-  return allowedRoles?.includes(auth?.user?.role) ? (
+  const checkRole = () => {
+    if (allowedRoles.includes("admin")) {
+      return auth?.user?.is_superuser;
+    }
+    return allowedRoles.includes(auth?.user?.role);
+  };
+
+  return checkRole() ? (
     <Outlet />
-  ) : auth.user ? (
+  ) : auth?.user ? (
     <Navigate to="/unauthorized" state={{ from: location.pathname }} replace />
   ) : (
     <Navigate to="/login" state={{ from: location.pathname }} replace />
   );
+
 }
 
 export default PrivateRoutes;

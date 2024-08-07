@@ -99,7 +99,7 @@ class ToothSerializer(serializers.ModelSerializer):
 class TreatmentSerializer(serializers.ModelSerializer):
     patient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all())
     dentist = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
-    diagnostic = serializers.PrimaryKeyRelatedField(queryset=Diagnostic.objects.all())
+    diagnostic = serializers.PrimaryKeyRelatedField(queryset=Diagnostic.objects.all(), allow_null=True)
 
     status_display = serializers.SerializerMethodField()
     class Meta:
@@ -122,9 +122,9 @@ class TreatmentSerializer(serializers.ModelSerializer):
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
-    patient = PatientSerializer()
-    dentist = CustomUserSerializer()
-    treatment = TreatmentSerializer()
+    patient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all())
+    dentist = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all())
+    treatment = serializers.PrimaryKeyRelatedField(queryset=Treatment.objects.all())
     status_display = serializers.SerializerMethodField()
 
     class Meta:
@@ -133,6 +133,13 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def get_status_display(self, obj):
         return obj.get_status_display()
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['dentist'] = CustomUserSerializer(instance.dentist).data
+        representation['patient'] = PatientSerializer(instance.patient).data
+        representation['treatment'] = TreatmentSerializer(instance.treatment).data
+        return representation
 
 class PaymentSerializer(serializers.ModelSerializer):
     patient = serializers.PrimaryKeyRelatedField(queryset=Patient.objects.all())

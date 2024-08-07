@@ -5,6 +5,15 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCaption,
@@ -36,14 +45,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { CalendarPlus, Pen, ChevronLeft, ChevronDown } from "lucide-react";
 import teethImage from "../../assets/teeth.png";
 import { useParams } from "react-router-dom";
 import api from "../../api";
 import { ACCESS_TOKEN } from "/src/constants";
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast";
 import { jwtDecode } from "jwt-decode";
+import { set } from "date-fns";
+import Services from "./Services.jsx";
 
 const TreatmentPlan = () => {
   const teethNumbers = [
@@ -56,22 +70,118 @@ const TreatmentPlan = () => {
     77, 41, 41, 40, 34, 33, 34, 33, 41, 41, 40, 77, 77, 81,
   ];
 
+  const [dentists, setDentists] = React.useState([]); // set initial state of dentists to [
   const [selectedTeeth, setSelectedTeeth] = useState([]);
   const [treatments, setTreatments] = useState([]);
   const { patientId } = useParams();
-  useEffect(() => {
-    const fetchTreatments = async () => {
-      try {
-        const response = await api.get(`/api/treatments/patient/${patientId}`);
-        setTreatments(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.error("Error fetching treatments:", error);
-      }
-    };
+  const [treatmentPrices, setTreatmentPrices] = useState({});
+  const [treatmentNotes, setTreatmentNotes] = useState({});
+  const { toast } = useToast();
+  const token = jwtDecode(localStorage.getItem(ACCESS_TOKEN));
+  const [formData, setFormData] = React.useState({
+    dentist: "",
+    patient: "",
+    date: "",
+    treatment: "",
+    start_hour: "",
+    end_hour: "",
+    comment: "",
+  });
 
+  const fetchTreatments = async () => {
+    try {
+      const response = await api.get(`/api/treatments/patient/${patientId}`);
+      response.data.map((treatment) => {
+        setTreatmentPrices((prevPrices) => ({
+          ...prevPrices,
+          [treatment.id]: treatment.price,
+        }));
+
+        setTreatmentNotes((prevNotes) => ({
+          ...prevNotes,
+          [treatment.id]: treatment.notes,
+        }));
+        
+      });
+      setTreatments(response.data);
+      console.log(response.data);
+    } catch (error) {
+      console.error("Error fetching treatments:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchTreatments();
+    setFormData({
+      dentist: token.user_id,
+      patient: patientId,
+      date: "",
+      treatment: "",
+      start_hour: "",
+      end_hour: "",
+      comment: "",
+    });
   }, [patientId]);
+
+  const fetchDentists = async () => {
+    try {
+      const response = await api.get("/api/users/");
+      // filter response data to only include dentists (role == dentist) and set it to dentists state
+      setDentists(
+        response.data.filter((dentist) => dentist.role === "dentist")
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  React.useEffect(() => {
+    // fetch all the dentists from the backend using api.get in a try catch block
+    fetchDentists();
+  }, []);
+
+  const handleChange = (id, value) => {
+    setFormData({ ...formData, [id]: value });
+  };
+
+  const handleAppointmentSubmit = async (e, treatmentId) => {
+    e.preventDefault();
+    try {
+      const response = await api.post("/api/appointments/", {
+        dentist: formData.dentist,
+        patient: formData.patient,
+        date: formData.date,
+        treatment: treatmentId,
+        start_hour: formData.start_hour,
+        end_hour: formData.end_hour,
+        comment: formData.comment,
+      });
+      console.log("Appointment added successfully:", response.data);
+      // Optionally, you can handle success state or reset the form here
+      toast({
+        variant: "success",
+        title: "Success",
+        description: "Appointment added successfuly!",
+      });
+    } catch (error) {
+      console.error("Error adding appointment:", error);
+      // Handle error state if needed
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error: " + JSON.stringify(e.response.data),
+      });
+    } finally {
+      setFormData({
+        dentist: token.user_id,
+        patient: patientId,
+        date: "",
+        treatment: "",
+        start_hour: "",
+        end_hour: "",
+        comment: "",
+      });
+    }
+  };
 
   //   const handleStatusSubmit = async (e) => {
   //     e.preventDefault();
@@ -127,6 +237,50 @@ const TreatmentPlan = () => {
     }
   };
 
+  const handleTreatmentPriceSubmit = async (e, treatment) => {
+    e.preventDefault();
+    try {
+      const response = await api.patch(`/api/treatments/${treatment.id}/`, {
+        price: treatmentPrices[treatment.id],
+      });
+      console.log("Price Changed");
+      toast({
+        variant: "success",
+        title: "Success",
+        description: "Successs: Price updated!",
+      });
+    } catch (e) {
+      console.error("Error fetching treatments:", e);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error: " + JSON.stringify(e.response.data),
+      });
+    }
+  };
+
+  const handleTreatmentNoteSubmit = async (e, treatment) => {
+    e.preventDefault();
+    try {
+      const response = await api.patch(`/api/treatments/${treatment.id}/`, {
+        notes: treatmentNotes[treatment.id],
+      });
+      console.log("Notes Changed");
+      toast({
+        variant: "success",
+        title: "Success",
+        description: "Successs: Notes updated!",
+      });
+    } catch (e) {
+      console.error("Error fetching treatments:", e);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error: " + JSON.stringify(e.response.data),
+      });
+    }
+  };
+
   const renderTeeth = (teeth) => {
     return teeth.map((tooth) => {
       const isSelected = selectedTeeth.includes(tooth);
@@ -159,10 +313,7 @@ const TreatmentPlan = () => {
             {renderTeeth(teethNumbers.slice(24, 32))}
           </div>
         </div>
-        <div
-          className="h-[475px] overflow-y-scroll text-right"
-          style={{ flex: "2" }}
-        >
+        <div className="flex-grow h-[475px] overflow-y-scroll text-right">
           <Card>
             <CardHeader>
               <CardTitle className="text-center">General Info</CardTitle>
@@ -172,9 +323,10 @@ const TreatmentPlan = () => {
             </CardHeader>
             <CardContent>
               {/* <p>Card Content</p> */}
-              <TreatmentPlanServices
+              <Services
                 patientId={patientId}
                 selectedTeeth={selectedTeeth}
+                fetchTreatments={fetchTreatments}
               />
             </CardContent>
             {/* <CardFooter>
@@ -188,33 +340,161 @@ const TreatmentPlan = () => {
         <Table className="text-nowrap">
           <TableHeader className="bg-slate-100">
             <TableRow>
-              <TableHead>Detail</TableHead>
+              <TableHead>Treatment</TableHead>
               <TableHead>Teeth</TableHead>
               <TableHead>Diagnostic</TableHead>
-              <TableHead>Treatments</TableHead>
               <TableHead>Price (Base|Net)</TableHead>
               <TableHead>Notes</TableHead>
-              <TableHead>Appointment</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="text-center">Appointment</TableHead>
+              <TableHead className="text-right">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {treatments.map((treatment) => (
               <TableRow key={treatment.id}>
-                <TableCell>Traitement General</TableCell>
+                <TableCell>{treatment.treatment_name}</TableCell>
                 <TableCell>{treatment.teeth.join(", ")}</TableCell>
                 <TableCell>{treatment.diagnostic.name}</TableCell>
-                <TableCell>{treatment.treatment_name}</TableCell>
-                <TableCell>{treatment.price}</TableCell>
-                <TableCell>{treatment.notes}</TableCell>
                 <TableCell>
-                  <span className="flex items-center justify-center">
-                    <CalendarPlus />
-                  </span>
+                  <form
+                    onSubmit={(e) => handleTreatmentPriceSubmit(e, treatment)}
+                    className="grid gap-2"
+                  >
+                    <div>
+                      <Input
+                        type="number"
+                        className="w-32"
+                        placeholder={treatment.price}
+                        value={treatmentPrices[treatment.id]}
+                        onChange={(e) => {
+                          setTreatmentPrices((prevPrices) => ({
+                            ...prevPrices,
+                            [treatment.id]: e.target.value,
+                          }));
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Button type="submit" className="col-span-3 hidden">
+                        <Pen className="mr-2 h-4 w-4" /> Change Price
+                      </Button>
+                    </div>
+                  </form>
                 </TableCell>
                 <TableCell>
+                  <form
+                    onSubmit={(e) => handleTreatmentNoteSubmit(e, treatment)}
+                    className="grid gap-2"
+                  >
+                    <div>
+                      <Textarea
+                        type="text"
+                        className="min-h-10 w-32"
+                        placeholder="Notes..."
+                        value={treatmentNotes[treatment.id]}
+                        onChange={(e) => {
+                          setTreatmentNotes((prevNotes) => ({
+                            ...prevNotes,
+                            [treatment.id]: e.target.value,
+                          }));
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Button type="submit" className="col-span-3 hidden">
+                        <Pen className="mr-2 h-4 w-4" /> Change Notes
+                      </Button>
+                    </div>
+                  </form>
+                  </TableCell>
+                <TableCell>
+                  <span className="flex items-center justify-center">
+                    <Dialog>
+                      <DialogTrigger>
+                        <CalendarPlus />
+                      </DialogTrigger>
+                      <DialogContent className="p-6 sm:max-w-md">
+                        <form
+                          onSubmit={(e) =>
+                            handleAppointmentSubmit(e, treatment.id)
+                          }
+                        >
+                          <DialogHeader>
+                            <DialogTitle>New Appointment</DialogTitle>
+                            <DialogDescription>
+                              Schedule a new appointment for the patient.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>
+                                  Dentist
+                                </Label>
+                                <Input value={token.full_name} disabled />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="appointment-date">Date</Label>
+                                <Input
+                                  id="date"
+                                  type="date"
+                                  placeholder="Select date"
+                                  onChange={(e) =>
+                                    handleChange(e.target.id, e.target.value)
+                                  }
+                                  required
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="start_hour">Start Time</Label>
+                                <Input
+                                  id="start_hour"
+                                  type="time"
+                                  placeholder="Select start time"
+                                  onChange={(e) =>
+                                    handleChange(e.target.id, e.target.value)
+                                  }
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="end_hour">End Time</Label>
+                                <Input
+                                  id="end_hour"
+                                  type="time"
+                                  placeholder="Select end time"
+                                  onChange={(e) =>
+                                    handleChange(e.target.id, e.target.value)
+                                  }
+                                  required
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="comment">Notes</Label>
+                              <Textarea
+                                id="comment"
+                                placeholder="Add any additional notes"
+                                className="min-h-[50px]"
+                                onChange={(e) =>
+                                  handleChange(e.target.id, e.target.value)
+                                }
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button type="submit">Save Appointment</Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </span>
+                </TableCell>
+                <TableCell className="">
                   <Popover>
-                    <PopoverTrigger className="flex items-center gap-1">
+                    <PopoverTrigger className="flex items-center gap-1 float-right">
                       <Badge
                         variant={
                           treatment.status === "CD" ||
@@ -307,224 +587,3 @@ const TreatmentPlan = () => {
 };
 
 export default TreatmentPlan;
-
-const TreatmentPlanServices = ({ patientId, selectedTeeth }) => {
-  const [speciality, setSpeciality] = useState([]);
-  const [services, setServices] = useState([]);
-  const [subServices, setSubServices] = useState([]);
-  const [subSubServices, setSubSubServices] = useState([]);
-  const [openItems, setOpenItems] = useState({}); // State to track open/closed state
-  const token = jwtDecode(localStorage.getItem(ACCESS_TOKEN));
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchSpeciality = async () => {
-      try {
-        const response1 = await api.get(`/api/specialities/`);
-        const response2 = await api.get(`/api/dental-services/`);
-        const response3 = await api.get(`/api/sub-category-services/`);
-        const response4 = await api.get(`/api/sub-sub-category-services/`);
-        setSpeciality(response1.data);
-        setServices(response2.data);
-        setSubServices(response3.data);
-        setSubSubServices(response4.data);
-      } catch (error) {
-        console.error("Error fetching speciality:", error);
-      }
-    };
-
-    fetchSpeciality();
-  }, []);
-
-  const handleToggle = (id) => {
-    setOpenItems((prevOpenItems) => ({
-      ...prevOpenItems,
-      [id]: !prevOpenItems[id], // Toggle the open state
-    }));
-  };
-
-  const createTreatment = async (service, options = {}) => {
-    console.log("service name: " + service.name);
-    var treatment_name = service.name;
-    const { subService = null, subSubService = null } = options;
-
-    if (subService) {
-      treatment_name = treatment_name + " - " + subService.name;
-    }
-    if (subSubService) {
-      treatment_name = treatment_name + " - " + subSubService.name;
-    }
-    const general_treatments = ["Consultation générale", "Détartrage"];
-    const data = {
-      patient: patientId,
-      dentist: token.user_id,
-      teeth: selectedTeeth,
-      diagnostic: "2",
-      notes: "",
-      price: 2000,
-      treatment_name: treatment_name,
-      status: "P",
-    };
-    console.log(service);
-    console.log(data);
-    if (data.teeth.length === 0 && general_treatments.includes(service.name)) {
-      try {
-        const response = await api.post(`/api/treatments/`, data);
-        console.log(response.data);
-        toast({
-        variant: "success",
-        title: "Success",
-        description: "Successs: you must select at least a tooth first for this type of treatment!",
-      });
-      } catch (error) {
-        console.error("Error fetching treatments:", error);
-        toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Error: ",
-      });
-      }
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Error: you must select at least a tooth first for this type of treatment!",
-      });
-    }
-  };
-  return (
-    <>
-      {speciality.map((sp) => (
-        <Collapsible key={sp.id}>
-          <CollapsibleTrigger
-            onClick={() => handleToggle(sp.id)}
-            className="w-full"
-          >
-            <div className="rounded-md border px-4 py-3 mb-1 font-medium text-sm">
-              <div className="flex justify-between items-center">
-                <span>{sp.name}</span>
-                {openItems[sp.id] ? <ChevronDown /> : <ChevronLeft />}
-              </div>
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent
-            className="CollapsibleContent"
-            open={openItems[sp.id]}
-          >
-            {services
-              .filter((service) => service.speciality === sp.id)
-              .map((service) => (
-                <Collapsible key={service.id}>
-                  <CollapsibleTrigger
-                    className="w-4/5"
-                    onClick={() => handleToggle(service.id)}
-                  >
-                    <div
-                      className="rounded-md border px-4 py-3 font-medium text-sm bg-red-300"
-                      onClick={() => {
-                        if (!service.has_subcategories) {
-                          console.log("creating treatment...");
-                          createTreatment(service);
-                        }
-                      }}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span>{service.name}</span>
-                        {service.has_subcategories &&
-                          (openItems[service.id] ? (
-                            <ChevronDown />
-                          ) : (
-                            <ChevronLeft />
-                          ))}
-                      </div>
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent
-                    className="ml-4 CollapsibleContent"
-                    open={openItems[service.id]}
-                  >
-                    {subServices
-                      .filter(
-                        (subService) =>
-                          service.has_subcategories &&
-                          subService.category === service.id
-                      )
-                      .map((subService) => (
-                        <Collapsible key={subService.id}>
-                          <CollapsibleTrigger
-                            className="w-3/5"
-                            onClick={() => handleToggle(subService.id)}
-                          >
-                            <div
-                              className="rounded-md border px-4 py-3 font-medium text-sm bg-pink-300"
-                              onClick={() => {
-                                if (!subService.has_subcategories) {
-                                  console.log("creating treatment...");
-                                  createTreatment(service, {
-                                    subService: subService,
-                                  });
-                                }
-                              }}
-                            >
-                              <div className="flex justify-between items-center">
-                                <span>{subService.name}</span>
-                                {subService.has_subcategories &&
-                                  (openItems[subService.id] ? (
-                                    <ChevronDown />
-                                  ) : (
-                                    <ChevronLeft />
-                                  ))}
-                              </div>
-                            </div>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent
-                            className="CollapsibleContent"
-                            open={openItems[subService.id]}
-                          >
-                            {subSubServices
-                              .filter(
-                                (subSubService) =>
-                                  subService.has_subcategories &&
-                                  subSubService.subcategory === subService.id
-                              )
-                              .map((subSubService) => (
-                                <Collapsible key={subSubService.id}>
-                                  <CollapsibleTrigger
-                                    className="w-2/5"
-                                    onClick={() =>
-                                      handleToggle(subSubService.id)
-                                    }
-                                  >
-                                    <div
-                                      className="rounded-md border px-4 py-3 font-medium text-sm bg-purple-400"
-                                      onClick={() => {
-                                        console.log("creating treatment...");
-                                        createTreatment(service, {
-                                          subService: subService,
-                                          subSubService: subSubService,
-                                        });
-                                      }}
-                                    >
-                                      {subSubService.name}
-                                    </div>
-                                  </CollapsibleTrigger>
-                                  <CollapsibleContent
-                                    className="CollapsibleContent"
-                                    open={openItems[subSubService.id]}
-                                  >
-                                    {/* Content for subSubService */}
-                                  </CollapsibleContent>
-                                </Collapsible>
-                              ))}
-                          </CollapsibleContent>
-                        </Collapsible>
-                      ))}
-                  </CollapsibleContent>
-                </Collapsible>
-              ))}
-          </CollapsibleContent>
-        </Collapsible>
-      ))}
-    </>
-  );
-};

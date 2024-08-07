@@ -18,6 +18,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['birth_date'] = user.birth_date.isoformat() if user.birth_date else None
         token['address'] = user.address
         token['full_name'] = user.full_name
+        token['is_superuser'] = user.is_superuser
         # ...
 
         return token
