@@ -45,6 +45,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -101,7 +111,6 @@ const TreatmentPlan = () => {
           ...prevNotes,
           [treatment.id]: treatment.notes,
         }));
-        
       });
       setTreatments(response.data);
       console.log(response.data);
@@ -341,10 +350,10 @@ const TreatmentPlan = () => {
           <TableHeader className="bg-slate-100">
             <TableRow>
               <TableHead>Treatment</TableHead>
-              <TableHead>Teeth</TableHead>
-              <TableHead>Diagnostic</TableHead>
-              <TableHead>Price (Base|Net)</TableHead>
-              <TableHead>Notes</TableHead>
+              <TableHead className="text-center">Teeth</TableHead>
+              <TableHead className="text-center">Diagnostic</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead className="text-center">Notes</TableHead>
               <TableHead className="text-center">Appointment</TableHead>
               <TableHead className="text-right">Status</TableHead>
             </TableRow>
@@ -353,8 +362,16 @@ const TreatmentPlan = () => {
             {treatments.map((treatment) => (
               <TableRow key={treatment.id}>
                 <TableCell>{treatment.treatment_name}</TableCell>
-                <TableCell>{treatment.teeth.join(", ")}</TableCell>
-                <TableCell>{treatment.diagnostic.name}</TableCell>
+                <TableCell className="text-center">
+                  {treatment.teeth.length > 0
+                    ? treatment.teeth.join(", ")
+                    : "-"}
+                </TableCell>
+                <TableCell className="text-center">
+                  {treatment.diagnostic.name === ""
+                    ? "Click here later"
+                    : treatment.diagnostic.name} 
+                </TableCell>
                 <TableCell>
                   <form
                     onSubmit={(e) => handleTreatmentPriceSubmit(e, treatment)}
@@ -381,32 +398,51 @@ const TreatmentPlan = () => {
                     </div>
                   </form>
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-center">
                   <form
                     onSubmit={(e) => handleTreatmentNoteSubmit(e, treatment)}
-                    className="grid gap-2"
                   >
-                    <div>
-                      <Textarea
-                        type="text"
-                        className="min-h-10 w-32"
-                        placeholder="Notes..."
-                        value={treatmentNotes[treatment.id]}
-                        onChange={(e) => {
-                          setTreatmentNotes((prevNotes) => ({
-                            ...prevNotes,
-                            [treatment.id]: e.target.value,
-                          }));
-                        }}
-                      />
-                    </div>
+                    <Sheet>
+                      <SheetTrigger>
+                          <span>See Notes</span>
+                      </SheetTrigger>
+                      <SheetContent side="top">
+                        <SheetHeader>
+                          <SheetTitle>Notes</SheetTitle>
+                          <SheetDescription>
+                            Add Your Treatment notes here below.
+                          </SheetDescription>
+                        </SheetHeader>
+
+                        <div className="grid gap-4 py-4">
+                          <Textarea
+                            type="text"
+                            className="min-h-20 w-full"
+                            placeholder="Notes..."
+                            value={treatmentNotes[treatment.id]}
+                            onChange={(e) => {
+                              setTreatmentNotes((prevNotes) => ({
+                                ...prevNotes,
+                                [treatment.id]: e.target.value,
+                              }));
+                            }}
+                          />
+                        </div>
+                        <SheetFooter>
+                          <SheetClose asChild>
+                            <Button type="submit">Save changes</Button>
+                          </SheetClose>
+                        </SheetFooter>
+                      </SheetContent>
+                    </Sheet>
+
                     <div>
                       <Button type="submit" className="col-span-3 hidden">
                         <Pen className="mr-2 h-4 w-4" /> Change Notes
                       </Button>
                     </div>
                   </form>
-                  </TableCell>
+                </TableCell>
                 <TableCell>
                   <span className="flex items-center justify-center">
                     <Dialog>
@@ -428,9 +464,7 @@ const TreatmentPlan = () => {
                           <div className="grid gap-4">
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                <Label>
-                                  Dentist
-                                </Label>
+                                <Label>Dentist</Label>
                                 <Input value={token.full_name} disabled />
                               </div>
                               <div className="space-y-2">
@@ -495,6 +529,7 @@ const TreatmentPlan = () => {
                 <TableCell className="">
                   <Popover>
                     <PopoverTrigger className="flex items-center gap-1 float-right">
+                      <Pen size={16} />
                       <Badge
                         variant={
                           treatment.status === "CD" ||
@@ -511,7 +546,6 @@ const TreatmentPlan = () => {
                           ? treatment.status_display.slice(0, 8)
                           : treatment.status_display}
                       </Badge>
-                      <Pen size={16} />
                     </PopoverTrigger>
                     <PopoverContent className="w-80">
                       <div className="grid gap-4">

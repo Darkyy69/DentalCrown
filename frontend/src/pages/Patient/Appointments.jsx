@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -48,7 +49,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
-import { Ellipsis } from "lucide-react";
+import { Ellipsis, Plus } from "lucide-react";
+import { ACCESS_TOKEN } from "/src/constants";
+import { jwtDecode } from "jwt-decode";
 
 const Appointments = () => {
   const { patientId } = useParams();
@@ -58,6 +61,41 @@ const Appointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [appointmentPopup, setAppointmentPopup] = useState(false);
   const [drawerMode, setDrawerMode] = useState(null);
+  const token = jwtDecode(localStorage.getItem(ACCESS_TOKEN));
+  const { toast } = useToast();
+  const [treatments, setTreatments] = useState([]);
+  const [formData, setFormData] = useState({
+    dentist: "",
+    patient: "",
+    date: "",
+    treatment: "",
+    start_hour: "",
+    end_hour: "",
+    comment: "",
+  });
+
+  const fetchTreatments = async () => {
+    try {
+      const response = await api.get(`/api/treatments/patient/${patientId}`);
+      setTreatments(response.data);
+      console.log(response.data);
+    } catch (error) {
+      console.error("Error fetching treatments:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTreatments();
+    setFormData({
+      dentist: token.user_id,
+      patient: patientId,
+      date: "",
+      treatment: "",
+      start_hour: "",
+      end_hour: "",
+      comment: "",
+    });
+  }, [patientId]);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -92,6 +130,42 @@ const Appointments = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
+  const handleChange = (id, value) => {
+    setFormData({ ...formData, [id]: value });
+  };
+
+  const handleAppointmentSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await api.post("/api/appointments/", formData);
+      console.log("Appointment added successfully:", response.data);
+      // Optionally, you can handle success state or reset the form here
+      toast({
+        variant: "success",
+        title: "Success",
+        description: "Appointment added successfuly!",
+      });
+    } catch (error) {
+      console.error("Error adding appointment:", error);
+      // Handle error state if needed
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Error: " + JSON.stringify(e.response.data),
+      });
+    } finally {
+      setFormData({
+        dentist: token.user_id,
+        patient: patientId,
+        date: "",
+        treatment: "",
+        start_hour: "",
+        end_hour: "",
+        comment: "",
+      });
+    }
+  };
+console.log(formData.treatment)
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-4">
@@ -102,72 +176,103 @@ const Appointments = () => {
               <Button className="hidden md:inline-flex">New Appointment</Button>
             </DialogTrigger>
             <DialogContent className="p-6 sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>New Appointment</DialogTitle>
-                <DialogDescription>
-                  Schedule a new appointment for the patient.
-                </DialogDescription>
-              </DialogHeader>
-              <form className="grid gap-4">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={(e) => handleAppointmentSubmit(e)}>
+                <DialogHeader>
+                  <DialogTitle>New Appointment</DialogTitle>
+                  <DialogDescription>
+                    Schedule a new appointment for the patient.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Dentist</Label>
+                      <Input value={token.full_name} disabled />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="appointment-date">Date</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        placeholder="Select date"
+                        onChange={(e) =>
+                          handleChange(e.target.id, e.target.value)
+                        }
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="start_hour">Start Time</Label>
+                      <Input
+                        id="start_hour"
+                        type="time"
+                        placeholder="Select start time"
+                        onChange={(e) =>
+                          handleChange(e.target.id, e.target.value)
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="end_hour">End Time</Label>
+                      <Input
+                        id="end_hour"
+                        type="time"
+                        placeholder="Select end time"
+                        onChange={(e) =>
+                          handleChange(e.target.id, e.target.value)
+                        }
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="doctor">Doctor</Label>
-                    <Select id="doctor">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select doctor" />
+                    <Label htmlFor="treatment">Treatment</Label>
+                    <Select
+                    value={formData.treatment}
+                      onValueChange={(value) => {console.log(value); setFormData({ ...formData, treatment: value });}}
+                      required
+                    >
+                      <SelectTrigger id="treatment" className="w-full">
+                        <SelectValue placeholder="Choose a treatment" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="dr-john-doe">
-                          Dr. John Doe
-                        </SelectItem>
-                        <SelectItem value="dr-jane-smith">
-                          Dr. Jane Smith
-                        </SelectItem>
-                        <SelectItem value="dr-michael-johnson">
-                          Dr. Michael Johnson
-                        </SelectItem>
+                        {treatments
+                          .filter((treatment) => treatment.status === "P") // Filter treatments with teeth only
+                          .map((treatment) => (
+                            <SelectItem key={treatment.id} value={treatment.id.toString()}>
+                              {treatment.treatment_name}
+                              {treatment.teeth.length === 0
+                                ? ""
+                                : treatment.teeth.length === 1
+                                ? " | Tooth: "
+                                : " | Teeth: "}
+                              {treatment.teeth.join(",")}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="appointment-date">Date</Label>
-                    <Input
-                      id="appointment-date"
-                      type="date"
-                      placeholder="Select date"
+                    <Label htmlFor="comment">Notes</Label>
+                    <Textarea
+                      id="comment"
+                      placeholder="Add any additional notes"
+                      className="min-h-[50px]"
+                      onChange={(e) =>
+                        handleChange(e.target.id, e.target.value)
+                      }
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start-time">Start Time</Label>
-                    <Input
-                      id="start-time"
-                      type="time"
-                      placeholder="Select start time"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="end-time">End Time</Label>
-                    <Input
-                      id="end-time"
-                      type="time"
-                      placeholder="Select end time"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Add any additional notes"
-                    className="min-h-[100px]"
-                  />
-                </div>
+                <DialogFooter>
+                  <Button type="submit">Save Appointment</Button>
+                </DialogFooter>
               </form>
-              <DialogFooter>
-                <Button type="submit">Save Appointment</Button>
-              </DialogFooter>
             </DialogContent>
           </Dialog>
           <Drawer open={appointmentPopup} onOpenChange={setAppointmentPopup}>
