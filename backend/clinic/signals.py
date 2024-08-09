@@ -9,13 +9,12 @@
 #         raise ValidationError('The treatment does not belong to the selected patient.')
 
 
-from django.db.models.signals import pre_save, post_migrate
+from django.db.models.signals import pre_save, post_migrate, post_save
 from django.dispatch import receiver
-from .models import Payment, Appointment
 from django.utils import timezone
 from notification.models import PaymentNotification, ContentType
 from django.contrib.auth import get_user_model
-from clinic.models import Tooth, Diagnostic, DentalService, SubCategoryService, Speciality, SubSubCategoryService
+from clinic.models import Tooth, Diagnostic, DentalService, SubCategoryService, Speciality, SubSubCategoryService, Payment, Appointment, Treatment
 from clinic.dummy_data import create_dummy_data
 
 User = get_user_model()
@@ -234,6 +233,50 @@ def fill_data(sender, **kwargs):
     if sender.name == 'clinic':
         create_dummy_data()
         print('dummy data t3amret bang bang glock ta3 ta3 ata3t')
+
+
+@receiver(post_save, sender=Appointment)
+def update_treatment_start_date(sender, instance, **kwargs):
+    # Fetch the treatments related to this appointment
+    treatments = instance.treatment.all()
+    print(treatments)
+    
+    # Update the start_date of each treatment
+    for treatment in treatments:
+            treatment.start_date = instance.date
+            print(treatment.start_date)
+            treatment.save()
+
+
+
+@receiver(post_save, sender=Treatment)
+def update_treatment_end_date(sender, instance, **kwargs):
+    if instance.status in ['D', 'C']:
+        instance.end_date = timezone.now().date()
+        instance.save()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

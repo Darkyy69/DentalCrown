@@ -77,6 +77,7 @@ const Appointments = () => {
   const token = jwtDecode(localStorage.getItem(ACCESS_TOKEN));
   const { toast } = useToast();
   const [treatments, setTreatments] = useState([]);
+  const [showCheckboxes, setShowCheckboxes] = useState({});
   const [formData, setFormData] = useState({
     dentist: "",
     patient: "",
@@ -149,6 +150,15 @@ const Appointments = () => {
 
   const handleAppointmentSubmit = async (e) => {
     e.preventDefault();
+
+    const selectedTreatments = [];
+    for (const [key, value] of Object.entries(showCheckboxes)) {
+      if (value) {
+        selectedTreatments.push(key);
+      }
+    }
+    log(selectedTreatments);
+    
     try {
       const response = await api.post("/api/appointments/", formData);
       console.log("Appointment added successfully:", response.data);
@@ -179,6 +189,67 @@ const Appointments = () => {
     }
   };
   console.log(formData.treatment);
+  
+  
+  function DropdownMenuCheckboxes() {
+
+    useEffect(() => {
+      treatments
+        .filter((treatment) => treatment.status === "P")
+        .map((treatment) => {
+          setShowCheckboxes({
+            ...showCheckboxes,
+            [treatment.id]: false,
+          });
+        });
+    }, [treatments]);
+  
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline">Select Treatment/s</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-80 sm:w-[400px]">
+          <DropdownMenuLabel>
+            Treatments - {treatments.length}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <ScrollArea className="h-[150px] w-80 sm:w-[400px] rounded-md border p-4">
+            {treatments
+              .filter((treatment) => treatment.status === "P")
+              .map((treatment) => (
+                <div key={treatment.id}>
+                  <DropdownMenuCheckboxItem
+                    checked={showCheckboxes[treatment.id]}
+                    onCheckedChange={(checked) =>
+                      setShowCheckboxes((prevShowCheckboxes) => ({
+                        ...prevShowCheckboxes,
+                        [treatment.id]: checked,
+                      }))
+                    }
+                  >
+                    <div className="text-wrap">
+                      <span className="text-primary">
+                        {treatment.treatment_name}
+                      </span>
+                      <span className="text-xs sm:text-sm">
+                        {treatment.tooth ? "" : " | Tooth: "}
+                        {treatment.tooth}
+                      </span>
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                  {/* <DropdownMenuSeparator /> */}
+                  <Separator />
+                </div>
+              ))}
+          </ScrollArea>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+  
+  
+  
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-4">
@@ -248,7 +319,7 @@ const Appointments = () => {
                           ))}
                       </SelectContent>
                     </Select> */}
-                    <DropdownMenuCheckboxes treatments={treatments} />
+                    <DropdownMenuCheckboxes />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -437,82 +508,7 @@ const Appointments = () => {
 
 export default Appointments;
 
-function DropdownMenuCheckboxes(treatments) {
-  const [showCheckboxes, setShowCheckboxes] = useState({});
 
-  useEffect(() => {
-    treatments.treatments
-      .filter((treatment) => treatment.status === "P")
-      .map((treatment) => {
-        setShowCheckboxes({
-          ...showCheckboxes,
-          [treatment.id]: false,
-        });
-      });
-  }, []);
-
-  return (
-    // <Sheet>
-    //   <SheetTrigger asChild>
-    //     <Button variant="outline" >Select Treatment/s</Button>
-    //   </SheetTrigger>
-    //   <SheetContent side="top">
-    //     <SheetHeader>
-    //       <SheetTitle>Choose A Treatment</SheetTitle>
-    //       <SheetDescription>
-    //         Select the treatment/s you want to add to the appointment.
-    //       </SheetDescription>
-    //     </SheetHeader>
-    //     <div className="grid gap-4 py-4">
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline">Select Treatment/s</Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-80 sm:w-[400px]">
-        <DropdownMenuLabel>
-          Treatments - {treatments.treatments.length}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <ScrollArea className="h-[150px] w-80 sm:w-[400px] rounded-md border p-4">
-          {treatments.treatments
-            .filter((treatment) => treatment.status === "P")
-            .map((treatment) => (
-              <div key={treatment.id}>
-                <DropdownMenuCheckboxItem
-                  checked={showCheckboxes[treatment.id]}
-                  onCheckedChange={(checked) =>
-                    setShowCheckboxes({
-                      ...showCheckboxes,
-                      [treatment.id]: checked,
-                    })
-                  }
-                >
-                  <div className="text-wrap">
-                    <span className="text-primary">
-                      {treatment.treatment_name}
-                    </span>
-                    <span className="text-xs sm:text-sm">
-                      {treatment.teeth.length === 0
-                        ? ""
-                        : treatment.teeth.length === 1
-                        ? " | Tooth: "
-                        : " | Teeth: "}
-                      {treatment.teeth.join(",")}
-                    </span>
-                  </div>
-                </DropdownMenuCheckboxItem>
-                {/* <DropdownMenuSeparator /> */}
-                <Separator />
-              </div>
-            ))}
-        </ScrollArea>
-      </DropdownMenuContent>
-    </DropdownMenu>
-    //     </div>
-    //   </SheetContent>
-    // </Sheet>
-  );
-}
 
 const EditAppointmentDialog = ({ appointment, onClose }) => {
   const [formData, setFormData] = useState({

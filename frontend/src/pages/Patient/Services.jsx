@@ -172,11 +172,16 @@ const Services = ({ patientId, selectedTeeth, fetchTreatments }) => {
     console.log(service);
     console.log(data);
     if (
-      (data.teeth.length === 0 && general_treatments.includes(service.name)) ||
-      data.teeth.length > 0
+      (!data.tooth && general_treatments.includes(service.name)) ||
+      data.tooth
     ) {
       try {
-        const response = await api.post(`/api/treatments/`, data);
+        var link = `/api/treatments/create_many/`;
+        if(selectedTeeth.length === 0){
+          link = `/api/treatments/`;
+        }
+
+        const response = await api.post(link, data);
         console.log(response.data);
         fetchTreatments();
         toast({

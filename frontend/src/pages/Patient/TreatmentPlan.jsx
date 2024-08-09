@@ -363,8 +363,8 @@ const TreatmentPlan = () => {
               <TableRow key={treatment.id}>
                 <TableCell>{treatment.treatment_name}</TableCell>
                 <TableCell className="text-center">
-                  {treatment.teeth.length > 0
-                    ? treatment.teeth.join(", ")
+                  {treatment.tooth
+                    ? treatment.tooth
                     : "-"}
                 </TableCell>
                 <TableCell className="text-center">

@@ -58,19 +58,20 @@ def create_dummy_data():
 
     # Creating the treatment
     diagnosis = Diagnostic.objects.get(name="Cavité")
+    tooth_11 = Tooth.objects.get(code='11')
+    tooth_12 = Tooth.objects.get(code='12')
     treatment, created = Treatment.objects.get_or_create(
         patient=mourad,
         dentist=dentist,
         diagnostic=diagnosis,
+        tooth=tooth_11,
         treatment_name="na7itlou sena",
         notes="cc cvv",
         price=4000
     )
     
     # Set the teeth for the treatment
-    tooth_11 = Tooth.objects.get(code='11')
-    tooth_12 = Tooth.objects.get(code='12')
-    treatment.teeth.add(tooth_11, tooth_12)
+
     # treatment.teeth.set([tooth_11, tooth_12])
 
     # Creating the appointment
@@ -82,7 +83,9 @@ def create_dummy_data():
         date=date.today(),
         start_hour=start_hour,
         end_hour=end_hour,
-        treatment=treatment,
+        # treatment=treatment,
         status="P",
         comment="cc"
     )
+
+    appointment.treatment.set([treatment])

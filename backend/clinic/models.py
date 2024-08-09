@@ -107,7 +107,7 @@ class Tooth(models.Model):
 class Treatment(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.SET_NULL, null=True)
     dentist = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, limit_choices_to={'role': 'dentist'})
-    teeth = models.ManyToManyField(Tooth, blank=True)
+    tooth = models.ForeignKey(Tooth, on_delete=models.SET_NULL, blank=True, null=True)
     start_date = models.DateTimeField(editable=False, default=datetime.today)
     end_date = models.DateTimeField(editable=False, blank=True, null=True)
     # diagnostic would be choisable from a list of possible diagnostics
@@ -140,6 +140,8 @@ class Treatment(models.Model):
                 return JsonResponse({'error': 'Cannot change status from ' + orig.status + ' to another status.'}, status=400)
 
         super().save(*args, **kwargs)
+
+    
     
 class Appointment(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
@@ -147,7 +149,8 @@ class Appointment(models.Model):
     date = models.DateField()
     start_hour = models.TimeField(default='00:00:00')
     end_hour = models.TimeField(default='00:00:00')
-    treatment = models.ForeignKey(Treatment, on_delete=models.SET_NULL, null=True)
+    # treatment = models.ForeignKey(Treatment, on_delete=models.SET_NULL, null=True)
+    treatment = models.ManyToManyField(Treatment, blank=True)
     status = models.CharField(max_length=2, default='P', choices
     =[
         ('D', 'Done'),
@@ -179,10 +182,11 @@ class Appointment(models.Model):
         if self.treatment and self.treatment.patient != self.patient:
             return JsonResponse({'error': 'The treatment does not belong to the selected patient.'}, status=400)
         
-@receiver(pre_save, sender=Appointment)
-def validate_treatment_patient_relation(sender, instance, **kwargs):
-    if instance.treatment and instance.treatment.patient != instance.patient:
-        return JsonResponse({'error': 'The treatment does not belong to the selected patient.'}, status=400)      
+# @receiver(pre_save, sender=Appointment)
+# def validate_treatment_patient_relation(sender, instance, **kwargs):
+#     print(f"line 187 :{instance.date}")
+#     if instance.treatment and instance.treatment.patient != instance.patient:
+#         return JsonResponse({'error': 'The treatment does not belong to the selected patient.'}, status=400)      
 
 class Payment(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.DO_NOTHING)

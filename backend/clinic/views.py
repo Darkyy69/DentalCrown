@@ -200,6 +200,48 @@ class TreatmentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(treatments, many=True)
         return Response(serializer.data)
     
+    @action(detail=False, methods=['POST'], url_path='create_many')
+    def create_many(self, request):
+
+        created_treatments = []
+        treatment_name = request.data.get('treatment_name')
+        teeth = request.data.get('teeth')
+        treatment_parts = treatment_name.split(' - ')
+        general_treatments = ['Consultation générale', 'Détartrage']
+
+        if len(teeth) > 0 and any(part in general_treatments for part in treatment_parts):
+            teeth = []
+        
+        if len(teeth) == 0:
+            treatment = Treatment.objects.create(
+                patient_id=request.data.get('patient'),
+                dentist_id=request.data.get('dentist'),
+                diagnostic_id=request.data.get('diagnostic'),
+                notes=request.data.get('notes'),
+                price=request.data.get('price'),
+                treatment_name=treatment_name,
+                status=request.data.get('status'),
+                tooth_id=None
+            )
+            created_treatments.append(treatment)
+            
+        else:
+            for tooth in teeth:
+                treatment = Treatment.objects.create(
+                    patient_id=request.data.get('patient'),
+                    dentist_id=request.data.get('dentist'),
+                    diagnostic_id=request.data.get('diagnostic'),
+                    notes=request.data.get('notes'),
+                    price=request.data.get('price'),
+                    treatment_name=treatment_name,
+                    status=request.data.get('status'),
+                    tooth_id=tooth
+                )
+                created_treatments.append(treatment)
+
+        return Response({'status': 'success', 'created_treatments': [t.id for t in created_treatments]})
+
+
 class ConsumableViewSet(viewsets.ModelViewSet):
     queryset = Consumable.objects.all()
     serializer_class = ConsumableSerializer
