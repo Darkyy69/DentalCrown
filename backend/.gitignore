@@ -6,6 +6,11 @@
 *.pot
 *.pyc
 __pycache__/
+api/__pycache__/
+user/__pycache__/
+clinic/__pycache__/
+clinic/migrations/__pycache__/
+user/migrations/__pycache__/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal

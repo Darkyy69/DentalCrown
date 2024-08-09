@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../../api";
 import { Card } from "@/components/ui/card";
 import { useParams } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableHeader,
@@ -10,6 +11,16 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
 import {
   Dialog,
   DialogTrigger,
@@ -42,9 +53,11 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
@@ -165,7 +178,7 @@ const Appointments = () => {
       });
     }
   };
-console.log(formData.treatment)
+  console.log(formData.treatment);
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between mb-4">
@@ -202,6 +215,42 @@ console.log(formData.treatment)
                       />
                     </div>
                   </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label htmlFor="treatment">Treatment</Label>
+                    {/* <Select
+                      value={formData.treatment}
+                      onValueChange={(value) => {
+                        console.log(value);
+                        setFormData({ ...formData, treatment: value });
+                      }}
+                      required
+                    >
+                      <SelectTrigger id="treatment" className="w-full">
+                        <SelectValue placeholder="Choose a treatment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {treatments
+                          .filter((treatment) => treatment.status === "P") // Filter treatments with teeth only
+                          .map((treatment) => (
+                            <SelectItem
+                              key={treatment.id}
+                              value={treatment.id.toString()}
+                            >
+                              {treatment.treatment_name}
+                              {treatment.teeth.length === 0
+                                ? ""
+                                : treatment.teeth.length === 1
+                                ? " | Tooth: "
+                                : " | Teeth: "}
+                              {treatment.teeth.join(",")}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select> */}
+                    <DropdownMenuCheckboxes treatments={treatments} />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="start_hour">Start Time</Label>
@@ -227,34 +276,6 @@ console.log(formData.treatment)
                         required
                       />
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="treatment">Treatment</Label>
-                    <Select
-                    value={formData.treatment}
-                      onValueChange={(value) => {console.log(value); setFormData({ ...formData, treatment: value });}}
-                      required
-                    >
-                      <SelectTrigger id="treatment" className="w-full">
-                        <SelectValue placeholder="Choose a treatment" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {treatments
-                          .filter((treatment) => treatment.status === "P") // Filter treatments with teeth only
-                          .map((treatment) => (
-                            <SelectItem key={treatment.id} value={treatment.id.toString()}>
-                              {treatment.treatment_name}
-                              {treatment.teeth.length === 0
-                                ? ""
-                                : treatment.teeth.length === 1
-                                ? " | Tooth: "
-                                : " | Teeth: "}
-                              {treatment.teeth.join(",")}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -415,6 +436,83 @@ console.log(formData.treatment)
 };
 
 export default Appointments;
+
+function DropdownMenuCheckboxes(treatments) {
+  const [showCheckboxes, setShowCheckboxes] = useState({});
+
+  useEffect(() => {
+    treatments.treatments
+      .filter((treatment) => treatment.status === "P")
+      .map((treatment) => {
+        setShowCheckboxes({
+          ...showCheckboxes,
+          [treatment.id]: false,
+        });
+      });
+  }, []);
+
+  return (
+    // <Sheet>
+    //   <SheetTrigger asChild>
+    //     <Button variant="outline" >Select Treatment/s</Button>
+    //   </SheetTrigger>
+    //   <SheetContent side="top">
+    //     <SheetHeader>
+    //       <SheetTitle>Choose A Treatment</SheetTitle>
+    //       <SheetDescription>
+    //         Select the treatment/s you want to add to the appointment.
+    //       </SheetDescription>
+    //     </SheetHeader>
+    //     <div className="grid gap-4 py-4">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Select Treatment/s</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-80 sm:w-[400px]">
+        <DropdownMenuLabel>
+          Treatments - {treatments.treatments.length}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <ScrollArea className="h-[150px] w-80 sm:w-[400px] rounded-md border p-4">
+          {treatments.treatments
+            .filter((treatment) => treatment.status === "P")
+            .map((treatment) => (
+              <div key={treatment.id}>
+                <DropdownMenuCheckboxItem
+                  checked={showCheckboxes[treatment.id]}
+                  onCheckedChange={(checked) =>
+                    setShowCheckboxes({
+                      ...showCheckboxes,
+                      [treatment.id]: checked,
+                    })
+                  }
+                >
+                  <div className="text-wrap">
+                    <span className="text-primary">
+                      {treatment.treatment_name}
+                    </span>
+                    <span className="text-xs sm:text-sm">
+                      {treatment.teeth.length === 0
+                        ? ""
+                        : treatment.teeth.length === 1
+                        ? " | Tooth: "
+                        : " | Teeth: "}
+                      {treatment.teeth.join(",")}
+                    </span>
+                  </div>
+                </DropdownMenuCheckboxItem>
+                {/* <DropdownMenuSeparator /> */}
+                <Separator />
+              </div>
+            ))}
+        </ScrollArea>
+      </DropdownMenuContent>
+    </DropdownMenu>
+    //     </div>
+    //   </SheetContent>
+    // </Sheet>
+  );
+}
 
 const EditAppointmentDialog = ({ appointment, onClose }) => {
   const [formData, setFormData] = useState({
